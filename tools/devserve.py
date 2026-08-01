@@ -26,7 +26,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 
 
-class Handler(http.server.SimpleHTTPRequestHandler):
+class RepoAndStashHandler(http.server.SimpleHTTPRequestHandler):
     """Serves the repo as if it were Stash.
 
     ROLE. Collapses the two things the dashboard needs — its own files and a
@@ -46,7 +46,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if "favicon" not in (args[0] if args else ""):
             super().log_message(fmt, *args)
 
-    def _relay(self, upstream: str, body: bytes | None, content_type: str | None):
+    def _proxy_to(self, upstream: str, body: bytes | None, content_type: str | None):
         """Forward one request and hand the response back verbatim.
 
         Failures are reported as a status and a reason, never with the upstream
@@ -64,11 +64,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(payload)
         except urllib.error.HTTPError as err:
-            self._fail(err.code, f"upstream returned {err.code}")
+            self._refuse(err.code, f"upstream returned {err.code}")
         except urllib.error.URLError as err:
-            self._fail(502, f"cannot reach {upstream.split('/')[2]}: {err.reason}")
+            self._refuse(502, f"cannot reach {upstream.split('/')[2]}: {err.reason}")
 
-    def _fail(self, code: int, message: str):
+    def _refuse(self, code: int, message: str):
         payload = json.dumps({"error": message}).encode()
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
@@ -78,20 +78,20 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def do_POST(self):  # noqa: N802
         if self.path.split("?")[0] != "/graphql":
-            self._fail(404, "not found")
+            self._refuse(404, "not found")
             return
         length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(length)
-        self._relay(f"{self.stash_url}/graphql", body, self.headers.get("Content-Type"))
+        self._proxy_to(f"{self.stash_url}/graphql", body, self.headers.get("Content-Type"))
 
     def do_GET(self):  # noqa: N802
         path = self.path.split("?")[0]
         if path == "/stash-ui.css":
-            self._relay_stash_css()
+            self._serve_stash_stylesheet()
             return
         super().do_GET()
 
-    def _relay_stash_css(self):
+    def _serve_stash_stylesheet(self):
         """Serve Stash's own stylesheet, so the inbound leak check is real.
 
         Scoping our rules proves we do not leak *out* — that is a property of
@@ -104,13 +104,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             with urllib.request.urlopen(f"{self.stash_url}/", timeout=15) as res:
                 page = res.read().decode("utf-8", "replace")
         except urllib.error.URLError as err:
-            self._fail(502, f"cannot reach Stash: {err.reason}")
+            self._refuse(502, f"cannot reach Stash: {err.reason}")
             return
         match = re.search(r'href="\.?/?(assets/[^"]+\.css)"', page)
         if not match:
-            self._fail(502, "no stylesheet link found in the Stash page")
+            self._refuse(502, "no stylesheet link found in the Stash page")
             return
-        self._relay(f"{self.stash_url}/{match.group(1)}", None, None)
+        self._proxy_to(f"{self.stash_url}/{match.group(1)}", None, None)
 
 
 def main():
@@ -120,12 +120,12 @@ def main():
     parser.add_argument("--stash-url", default="http://127.0.0.1:9999")
     args = parser.parse_args()
 
-    Handler.stash_url = args.stash_url.rstrip("/")
+    RepoAndStashHandler.stash_url = args.stash_url.rstrip("/")
 
-    httpd = http.server.ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
+    httpd = http.server.ThreadingHTTPServer(("127.0.0.1", args.port), RepoAndStashHandler)
     print(f"dev server  http://127.0.0.1:{args.port}/src/index.html?demo=1")
-    print(f"  /graphql      -> {Handler.stash_url}")
-    print(f"  /stash-ui.css -> {Handler.stash_url} (for the containment check)")
+    print(f"  /graphql      -> {RepoAndStashHandler.stash_url}")
+    print(f"  /stash-ui.css -> {RepoAndStashHandler.stash_url} (for the containment check)")
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

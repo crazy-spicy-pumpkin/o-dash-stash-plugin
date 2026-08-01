@@ -31,7 +31,7 @@
 
   /** Makes the demo reproducible: the same day always yields the same history.
       mulberry32, because Math.random cannot be seeded. */
-  function makeRng(seed) {
+  function seededRng(seed) {
     let a = seed >>> 0;
     const next = () => {
       a = (a + 0x6D2B79F5) >>> 0;
@@ -70,7 +70,7 @@
 
   /** Gives the synthetic history a believable daily rhythm, so the time-of-day
       chart shows a shape instead of noise. */
-  function hourWeights() {
+  function hourlyWeights() {
     const w = new Array(24).fill(0.4);
     const peaks = {
       9: 0.5, 12: 0.6, 14: 0.7, 16: 0.8,
@@ -82,13 +82,13 @@
   }
 
   const DAY_MS = 86400000;
-  const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-`
+  const isoDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-`
     + `${String(d.getDate()).padStart(2, '0')}`;
 
   /** Produces a complete, plausible history without touching a real library.
       Catalogue, events, views, and a deliberately non-empty current week. */
   function buildDemoPayload() {
-    const rng = makeRng(SEED);
+    const rng = seededRng(SEED);
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const start = new Date(today.getTime() - MONTHS_OF_HISTORY * 30 * DAY_MS);
@@ -105,7 +105,7 @@
         title,
         studio: STUDIOS[studioIdx],
         studio_id: studioIdx + 1,
-        date: iso(new Date(start.getTime() + rng.randrange(400) * DAY_MS)),
+        date: isoDate(new Date(start.getTime() + rng.randrange(400) * DAY_MS)),
         rating: rng.choice([null, null, 60, 80, 80, 100]),
         performers: cast.map((name) => ({ id: PERFORMERS.indexOf(name) + 1, name })),
         tags: tags.map((tag) => ({ id: TAGS.indexOf(tag) + 1, name: tag })),
@@ -117,7 +117,7 @@
     const idWeights = ids.map((_, i) => (i < 3 ? 8.0 : i < 9 ? 3.0 : 1.0));
 
     // --- the history ---
-    const hours = hourWeights();
+    const hours = hourlyWeights();
     const hourChoices = Array.from({ length: 24 }, (_, i) => i);
 
     // One quiet stretch, so "longest gap" is interesting rather than uniform.
@@ -126,7 +126,7 @@
 
     const events = [];
     const views = [];
-    const at = (day, hour) => new Date(day.getFullYear(), day.getMonth(), day.getDate(),
+    const momentOn = (day, hour) => new Date(day.getFullYear(), day.getMonth(), day.getDate(),
       hour, rng.randrange(60), rng.randrange(60)).getTime();
 
     for (let day = new Date(start); day <= today; day = new Date(day.getTime() + DAY_MS)) {
@@ -138,7 +138,7 @@
       let count = 0;
       if (rng.random() < chance) count = rng.random() > 0.18 ? 1 : 2;
       for (let i = 0; i < count; i += 1) {
-        const when = at(day, rng.weighted(hourChoices, hours));
+        const when = momentOn(day, rng.weighted(hourChoices, hours));
         if (when > now.getTime()) continue;
         events.push({ t: when, s: Number(rng.weighted(ids, idWeights)) });
       }
@@ -147,7 +147,7 @@
       // "scenes watched" comparison meaningful.
       const viewCount = Math.floor(rng.expovariate(1 / viewRate));
       for (let i = 0; i < viewCount; i += 1) {
-        const when = at(day, rng.weighted(hourChoices, hours));
+        const when = momentOn(day, rng.weighted(hourChoices, hours));
         if (when <= now.getTime()) views.push(when);
       }
     }
@@ -160,7 +160,7 @@
     for (const offset of rng.sample(Array.from({ length: daysIn + 1 }, (_, i) => i), daysIn + 1)) {
       if (recent >= 3) break;
       const day = new Date(weekStart.getTime() + offset * DAY_MS);
-      const when = at(day, rng.choice([20, 21, 22, 23]));
+      const when = momentOn(day, rng.choice([20, 21, 22, 23]));
       if (when > now.getTime()) continue;
       events.push({ t: when, s: Number(rng.weighted(ids, idWeights)) });
       recent += 1;

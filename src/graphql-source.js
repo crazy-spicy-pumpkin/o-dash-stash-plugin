@@ -51,28 +51,28 @@
      else. Same-origin — the plugin — needs no key at all, which is the better
      answer whenever it is available. */
 
-  const STORE_URL = 'o-dash-stash-url';
-  const STORE_KEY = 'o-dash-api-key';
+  const STORED_STASH_URL = 'o-dash-stash-url';
+  const STORED_API_KEY = 'o-dash-api-key';
 
   /** Answers "which Stash, and are we allowed to ask it".
       This is the only thing that differs between running inside Stash and standalone.
       Order: an explicit global, then the query string, then what was stored earlier. */
-  function config() {
+  function connection() {
     const params = new URLSearchParams(window.location.search);
     if (params.has('stash')) {
-      localStorage.setItem(STORE_URL, params.get('stash').trim().replace(/\/+$/, ''));
+      localStorage.setItem(STORED_STASH_URL, params.get('stash').trim().replace(/\/+$/, ''));
     }
-    if (params.has('key')) localStorage.setItem(STORE_KEY, params.get('key').trim());
+    if (params.has('key')) localStorage.setItem(STORED_API_KEY, params.get('key').trim());
     return {
-      base: (window.OD_STASH_URL ?? localStorage.getItem(STORE_URL) ?? '').replace(/\/+$/, ''),
-      apiKey: localStorage.getItem(STORE_KEY) || '',
+      base: (window.OD_STASH_URL ?? localStorage.getItem(STORED_STASH_URL) ?? '').replace(/\/+$/, ''),
+      apiKey: localStorage.getItem(STORED_API_KEY) || '',
     };
   }
 
   /** The single door to Stash — every query goes through here.
       Which is why failures are explained in one place, in words a user can act on. */
-  async function gql(query) {
-    const { base, apiKey } = config();
+  async function runQuery(query) {
+    const { base, apiKey } = connection();
     const endpoint = window.STASH_GRAPHQL_ENDPOINT || (base ? `${base}/graphql` : '/graphql');
     const headers = { 'Content-Type': 'application/json' };
     if (apiKey) headers.ApiKey = apiKey;
@@ -153,14 +153,14 @@
 
   /** GraphQL IDs are strings. Coerce to numbers so ids are one type throughout
       the payload, whichever source produced it. */
-  const num = (v) => (v == null ? null : Number(v));
+  const toNumber = (v) => (v == null ? null : Number(v));
 
   /** Q1's GraphQL rows -> the payload's `events` and `scenes`.
 
       Stash returns one row per scene with its o_history nested inside; the
       payload wants the events flat and the scenes keyed by id, so this pivots
       one shape into the other. */
-  function mapOHistory(data) {
+  function eventsAndScenesFrom(data) {
     const scenes = {};
     const events = [];
 
@@ -171,14 +171,14 @@
       scenes[String(s.id)] = {
         title: name,
         studio: s.studio?.name ?? null,
-        studio_id: num(s.studio?.id),
+        studio_id: toNumber(s.studio?.id),
         date: s.date ?? null,
         // rating100 is Stash's 0-100 scale. Nothing renders it today; it is
         // carried so the payload is complete.
         rating: s.rating100 ?? null,
-        performers: (s.performers ?? []).map((p) => ({ id: num(p.id), name: p.name }))
+        performers: (s.performers ?? []).map((p) => ({ id: toNumber(p.id), name: p.name }))
           .sort(byNameBinary),
-        tags: (s.tags ?? []).map((t) => ({ id: num(t.id), name: t.name }))
+        tags: (s.tags ?? []).map((t) => ({ id: toNumber(t.id), name: t.name }))
           .sort(byNameBinary),
       };
 
@@ -187,7 +187,7 @@
         // unambiguous instant. Never slice these strings by hand: an event at
         // 22:15+05:30 is earlier than one at 23:45Z, and string order says the
         // opposite. tools/unit.mjs pins exactly this.
-        events.push({ t: Date.parse(ts), s: num(s.id) });
+        events.push({ t: Date.parse(ts), s: toNumber(s.id) });
       }
     }
 
@@ -200,7 +200,7 @@
       Same pivot as Q1, minus the metadata. `view_events` is an extra beyond the
       contract: it keeps which scene each view belongs to, which Stash gives for
       free and the flat `views` array throws away. */
-  function mapViews(data) {
+  function viewsFrom(data) {
     const views = [];
     const viewEvents = [];
     for (const s of data.findScenes.scenes) {
@@ -210,7 +210,7 @@
         // views[] is the flat array the charts consume; view_events keeps the
         // scene each view belongs to, which the API gives for free and a future
         // per-scene view panel would need.
-        viewEvents.push({ t, s: num(s.id) });
+        viewEvents.push({ t, s: toNumber(s.id) });
       }
     }
     return { views, view_events: viewEvents };
@@ -226,13 +226,13 @@
         // Standalone against a remote Stash it is that Stash's base URL, so
         // deep links still resolve. An empty value is legitimate: it means
         // "no links", which is what demo mode wants.
-        stash_url: config().base,
+        stash_url: connection().base,
         source_caption: 'live from Stash',
       };
 
-      const oHistory = gql(Q1_O_HISTORY).then(mapOHistory);
-      const views = gql(Q2_PLAY_HISTORY).then(mapViews);
-      const stats = gql(Q3_STATS).then((d) => ({
+      const oHistory = runQuery(Q1_O_HISTORY).then(eventsAndScenesFrom);
+      const views = runQuery(Q2_PLAY_HISTORY).then(viewsFrom);
+      const stats = runQuery(Q3_STATS).then((d) => ({
         library_scenes: d.stats.scene_count,
         source_caption: `live from Stash ${d.version.version} · no snapshot`,
       }));

@@ -78,7 +78,7 @@ const state = {
    points install a source before app.js runs. If it does fire, someone is
    loading app.js on its own, and a clear message beats a mystery request to an
    endpoint nothing here serves. */
-const noSource = {
+const unconfiguredSource = {
   async getPayload() {
     throw new Error('no data source installed — load graphql-source.js '
       + '(or demo-source.js) before app.js');
@@ -97,11 +97,11 @@ const noSource = {
                                sets it today, when ?demo=1 is present.
      window.graphqlSource      the live source, published whenever its file is
                                loaded — which is always, in both deployments.
-     noSource                  nothing was loaded; fail with an explanation.
+     unconfiguredSource                  nothing was loaded; fail with an explanation.
 
    Each source publishes itself and none of them knows about the others, so the
    dashboard picks a source without ever naming demo mode. */
-let dataSource = window.odSourceOverride ?? window.graphqlSource ?? noSource;
+let dataSource = window.odSourceOverride ?? window.graphqlSource ?? unconfiguredSource;
 
 /** Lets the host swap the data source after startup.
     The plugin mount uses this; nothing else needs to. */
@@ -202,9 +202,9 @@ function periodTitle(gran, start) {
 /* --------------------------------------------------------------------- */
 
 /* Every id is namespaced `od-`, because getElementById searches the whole
-   document: inside Stash, a bare $('main') would return the host's element if
+   document: inside Stash, a bare byId('main') would return the host's element if
    it came first, and the dashboard would quietly drive someone else's UI. */
-const $ = (id) => document.getElementById(id);
+const byId = (id) => document.getElementById(id);
 
 /** The mount container — <body> standalone, the route's div in the plugin.
     Everything that must not escape hangs off this one element: the styles, the
@@ -250,7 +250,7 @@ const animatedViews = new Set();
 
 /** Keeps entrance animations a reward for new data, rather than a tic on
     every render. */
-function firstShow(key) {
+function isFirstShowOf(key) {
   const full = `${state.dataVersion}|${key}`;
   if (animatedViews.has(full)) return false;
   animatedViews.add(full);
@@ -273,7 +273,7 @@ function enterPanel(node, dir = 0) {
 }
 
 /** Draws the eye to a figure that has changed. */
-function countTo(node, value, decimals = 0, allow = true) {
+function countUpTo(node, value, decimals = 0, allow = true) {
   const from = Number(node.dataset.value ?? NaN);
   node.dataset.value = String(value);
   if (!allow || reduceMotion.matches || Number.isNaN(from) || from === value) {
@@ -301,11 +301,11 @@ function svgEl(name, attrs = {}) {
 }
 
 /** Lets a panel be redrawn from scratch without leaking the previous render. */
-function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+function clearChildren(node) { while (node.firstChild) node.removeChild(node.firstChild); }
 
 /** Gives bars their shape: rounded at the data end, square where they meet
     the baseline, so the axis stays a hard line. */
-function columnPath(x, y, w, h, r = 4) {
+function roundedColumnPath(x, y, w, h, r = 4) {
   const rad = Math.min(r, w / 2, h);
   return `M${x},${y + h} L${x},${y + rad} Q${x},${y} ${x + rad},${y} `
        + `L${x + w - rad},${y} Q${x + w},${y} ${x + w},${y + rad} L${x + w},${y + h} Z`;
@@ -313,7 +313,7 @@ function columnPath(x, y, w, h, r = 4) {
 
 /** Keeps an axis readable by labelling round numbers, rather than whatever
     the data's maximum happens to be. */
-function niceTicks(max) {
+function axisTicks(max) {
   const top = Math.max(1, max);
   const steps = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500];
   const step = steps.find((s) => top / s <= 4) ?? Math.ceil(top / 4);
@@ -332,7 +332,7 @@ const tooltip = {
   /** (x, y) is the anchor: the tooltip sits above it, flipping below and
       clamping to the viewport rather than spilling off-screen. */
   show(html, x, y) {
-    if (!this.node) this.node = $('od-tooltip');
+    if (!this.node) this.node = byId('od-tooltip');
     const n = this.node;
     const wasHidden = !n.classList.contains('od-show');
     // appearing somewhere new should be a cut, not a glide across the page
@@ -356,7 +356,7 @@ const tooltip = {
 
 /** Gives a mark the detail the chart itself has no room to show.
     Focus as well as hover, so it is reachable from the keyboard. */
-function attachTip(target, htmlFn) {
+function attachTooltip(target, htmlFn) {
   const move = (ev) => {
     const r = target.getBoundingClientRect();
     tooltip.show(htmlFn(), r.left + r.width / 2, r.top);
@@ -376,7 +376,7 @@ function attachTip(target, htmlFn) {
     items: [{label, value, tip, dim, onClick}] */
 function renderColumns(container, items, opts = {}) {
   const { tickEvery = 1, plotHeight = 176, labelExtremes = true, animateIn = false } = opts;
-  clear(container);
+  clearChildren(container);
   if (!items.length) {
     container.innerHTML = '<p class="od-empty">No entries in this period.</p>';
     return;
@@ -389,7 +389,7 @@ function renderColumns(container, items, opts = {}) {
   const y0 = padT + plotHeight;
 
   const max = Math.max(...items.map((d) => d.value));
-  const { ticks, top } = niceTicks(max);
+  const { ticks, top } = axisTicks(max);
   const yOf = (v) => y0 - (v / top) * plotHeight;
 
   const svg = svgEl('svg', { viewBox: `0 0 ${width} ${height}`, height, role: 'img' });
@@ -430,7 +430,7 @@ function renderColumns(container, items, opts = {}) {
 
     if (d.value > 0) {
       const h = Math.max(2, y0 - yOf(d.value));
-      const bar = svgEl('path', { d: columnPath(bx, y0 - h, barW, h), class: 'od-bar' });
+      const bar = svgEl('path', { d: roundedColumnPath(bx, y0 - h, barW, h), class: 'od-bar' });
       if (d.dim) bar.setAttribute('opacity', '0.45');
       bars[i] = bar;
       svg.appendChild(bar);
@@ -473,7 +473,7 @@ function renderColumns(container, items, opts = {}) {
     hit.addEventListener('mouseleave', () => highlight(false));
     hit.addEventListener('focus', () => highlight(true));
     hit.addEventListener('blur', () => highlight(false));
-    attachTip(hit, () => d.tip);
+    attachTooltip(hit, () => d.tip);
     svg.appendChild(hit);
   });
 
@@ -482,7 +482,7 @@ function renderColumns(container, items, opts = {}) {
 
 /** The hero's trend line — where this period sits against the last twelve. */
 function renderSparkline(container, values, animateIn = false) {
-  clear(container);
+  clearChildren(container);
   if (values.length < 2) return;
   const width = Math.max(container.clientWidth || 240, 120);
   const height = 42, pad = 6;
@@ -515,7 +515,7 @@ function renderSparkline(container, values, animateIn = false) {
 
 /** The year at a glance: density per day, and the way into any single week. */
 function renderHeatmap(container, year, countsByDay, selection, animateIn) {
-  clear(container);
+  clearChildren(container);
   const cell = 12, gap = 3, step = cell + gap;
   const gutterL = 28, gutterT = 18;
   const jan1 = new Date(year, 0, 1);
@@ -584,7 +584,7 @@ function renderHeatmap(container, year, countsByDay, selection, animateIn) {
       };
       hit.addEventListener('click', jump);
       hit.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') jump(); });
-      attachTip(hit, () => `<b>${count} ${count === 1 ? 'entry' : 'entries'}</b><br>`
+      attachTooltip(hit, () => `<b>${count} ${count === 1 ? 'entry' : 'entries'}</b><br>`
         + `<span class="od-tt-sub">${fmtDayYear.format(d)}</span>`);
       svg.appendChild(hit);
 
@@ -601,7 +601,7 @@ function renderHeatmap(container, year, countsByDay, selection, animateIn) {
 
 /** Answers "what do I come back to" — the scene, performer and tag rankings. */
 function renderRanked(container, rows, emptyText, animateIn = false) {
-  clear(container);
+  clearChildren(container);
   if (!rows.length) {
     container.innerHTML = `<p class="od-empty">${emptyText}</p>`;
     return;
@@ -652,7 +652,7 @@ function renderRanked(container, rows, emptyText, animateIn = false) {
 
 /** The table twin of a chart, so no value is reachable only by hovering. */
 function renderTable(container, head, rows) {
-  clear(container);
+  clearChildren(container);
   const table = document.createElement('table');
   const thead = document.createElement('thead');
   const hr = document.createElement('tr');
@@ -681,11 +681,11 @@ function renderTable(container, head, rows) {
 /* --------------------------------------------------------------------- */
 
 /** Narrows O events to the period on screen. */
-function eventsIn(from, to) {
+function eventsBetween(from, to) {
   return state.events.filter((e) => e.date >= from && e.date < to);
 }
 /** Narrows views to the period on screen. */
-function viewsIn(from, to) {
+function viewsBetween(from, to) {
   return state.views.filter((t) => t >= +from && t < +to);
 }
 
@@ -698,7 +698,7 @@ function countsByDayMap(events) {
 }
 
 /** Buckets for the main chart of the selected period. */
-function mainBuckets(gran, start) {
+function bucketsForPeriod(gran, start) {
   const end = periodEnd(gran, start);
   const out = [];
   if (gran === 'year') {
@@ -725,7 +725,7 @@ function mainBuckets(gran, start) {
 
     Counts events by entity. keyFn yields {id, name} objects, so ties keep their
     identity and each row can link back into Stash. */
-function topBy(events, keyFn, kind, limit = 6) {
+function rankBy(events, keyFn, kind, limit = 6) {
   const map = new Map();
   for (const e of events) {
     for (const item of keyFn(e)) {
@@ -759,7 +759,7 @@ function stashLink(kind, id) {
 }
 
 /** Resolves an event back to its scene, for labels and deep links. */
-function sceneOf(e) { return state.data.scenes[e.sceneId] || null; }
+function sceneFor(e) { return state.data.scenes[e.sceneId] || null; }
 
 const TIP_ROWS = 4;
 
@@ -770,12 +770,12 @@ function escapeHtml(text) {
 
 /** Explains a bucket without making you leave the chart.
     Count, name, then a few entries — never a wall of text. */
-function bucketTip(bucket, events, drillable) {
+function bucketTooltipHtml(bucket, events, drillable) {
   const head = `<b>${events.length} ${events.length === 1 ? 'entry' : 'entries'}</b>`
     + `<br><span class="od-tt-sub">${escapeHtml(bucket.full)}</span>`;
   if (!events.length) return head;
   const rows = events.slice(0, TIP_ROWS).map((e) => {
-    const title = sceneOf(e)?.title || 'unknown scene';
+    const title = sceneFor(e)?.title || 'unknown scene';
     const short = title.length > 38 ? `${title.slice(0, 37)}…` : title;
     return `${fmtTime.format(e.date)} · ${escapeHtml(short)}`;
   });
@@ -799,25 +799,25 @@ function render() {
   const end = periodEnd(gran, start);
   const prevStart = shiftPeriod(gran, start, -1);
 
-  const inPeriod = eventsIn(start, end);
-  const inPrev = eventsIn(prevStart, start);
-  const buckets = mainBuckets(gran, start);
+  const inPeriod = eventsBetween(start, end);
+  const inPrev = eventsBetween(prevStart, start);
+  const buckets = bucketsForPeriod(gran, start);
   const dayCounts = countsByDayMap(inPeriod);
   const view = `${gran}:${isoDay(start)}`; // identifies the period on screen
 
-  $('od-period-label').textContent = periodTitle(gran, start);
+  byId('od-period-label').textContent = periodTitle(gran, start);
 
   /* ---- navigation limits ---- */
   const firstEvent = state.events[0]?.date ?? new Date();
-  $('od-prev-btn').disabled = +start <= +periodStart(gran, firstEvent);
-  $('od-next-btn').disabled = +start >= +periodStart(gran, new Date());
+  byId('od-prev-btn').disabled = +start <= +periodStart(gran, firstEvent);
+  byId('od-next-btn').disabled = +start >= +periodStart(gran, new Date());
 
   /* ---- hero ---- */
   const isCurrent = +start === +periodStart(gran, new Date());
-  $('od-hero-label').textContent = isCurrent ? `This ${GRAN_LABEL[gran]}` : periodTitle(gran, start);
-  countTo($('od-hero-value'), inPeriod.length, 0, firstShow(`hero:${view}`));
+  byId('od-hero-label').textContent = isCurrent ? `This ${GRAN_LABEL[gran]}` : periodTitle(gran, start);
+  countUpTo(byId('od-hero-value'), inPeriod.length, 0, isFirstShowOf(`hero:${view}`));
   const diff = inPeriod.length - inPrev.length;
-  $('od-hero-delta').textContent = state.events.length
+  byId('od-hero-delta').textContent = state.events.length
     ? `${diff === 0 ? '±0' : (diff > 0 ? `↑ ${diff}` : `↓ ${Math.abs(diff)}`)} vs previous ${GRAN_LABEL[gran]} (${inPrev.length})`
     : '';
 
@@ -829,20 +829,20 @@ function render() {
   const sparkValues = [];
   for (let i = back; i >= 0; i--) {
     const s = shiftPeriod(gran, start, -i);
-    sparkValues.push(eventsIn(s, periodEnd(gran, s)).length);
+    sparkValues.push(eventsBetween(s, periodEnd(gran, s)).length);
   }
-  renderSparkline($('od-hero-spark'), sparkValues, firstShow(`spark:${view}`));
-  $('od-hero-spark-caption').textContent = sparkValues.length > 1
+  renderSparkline(byId('od-hero-spark'), sparkValues, isFirstShowOf(`spark:${view}`));
+  byId('od-hero-spark-caption').textContent = sparkValues.length > 1
     ? `last ${sparkValues.length} ${GRAN_LABEL[gran]}s — peak ${Math.max(...sparkValues)}`
     : '';
 
   /* ---- tiles ---- */
-  const bucketCounts = buckets.map((b) => eventsIn(b.from, b.to).length);
+  const bucketCounts = buckets.map((b) => eventsBetween(b.from, b.to).length);
   const bestIdx = bucketCounts.indexOf(Math.max(...bucketCounts));
   const activeDays = new Set(inPeriod.map((e) => e.day)).size;
   const totalDays = daysBetween(start, end);
   const elapsedDays = Math.min(totalDays, Math.max(1, daysBetween(start, new Date()) + 1));
-  const periodViews = viewsIn(start, end).length;
+  const periodViews = viewsBetween(start, end).length;
   const subUnit = gran === 'year' ? 'month' : gran === 'month' ? 'day' : 'day';
 
   const tiles = [
@@ -876,9 +876,9 @@ function render() {
     },
   ];
 
-  const tilesEl = $('od-tiles');
-  clear(tilesEl);
-  const tilesFirst = firstShow(`tiles:${view}`);
+  const tilesEl = byId('od-tiles');
+  clearChildren(tilesEl);
+  const tilesFirst = isFirstShowOf(`tiles:${view}`);
   tiles.forEach((t, i) => {
     const card = document.createElement('div');
     card.className = 'od-tile';
@@ -894,74 +894,74 @@ function render() {
   });
 
   /* ---- main chart ---- */
-  $('od-main-chart-title').textContent = gran === 'year' ? 'O count by month' : 'O count by day';
-  $('od-main-chart-caption').textContent = `${inPeriod.length} total · ${periodTitle(gran, start)}`;
-  renderColumns($('od-main-chart'), buckets.map((b, i) => ({
+  byId('od-main-chart-title').textContent = gran === 'year' ? 'O count by month' : 'O count by day';
+  byId('od-main-chart-caption').textContent = `${inPeriod.length} total · ${periodTitle(gran, start)}`;
+  renderColumns(byId('od-main-chart'), buckets.map((b, i) => ({
     label: b.label,
     value: bucketCounts[i],
     dim: b.from > new Date(),
-    tip: bucketTip(b, eventsIn(b.from, b.to), gran !== 'week'),
+    tip: bucketTooltipHtml(b, eventsBetween(b.from, b.to), gran !== 'week'),
     onClick: gran === 'year' ? () => { state.gran = 'month'; state.anchor = b.from; syncControls(); render(); }
       : gran === 'month' ? () => { state.gran = 'week'; state.anchor = startOfWeek(b.from); syncControls(); render(); }
       : null,
   })), {
     tickEvery: gran === 'month' && buckets.length > 20 ? 2 : 1,
-    animateIn: firstShow(`main:${view}`),
+    animateIn: isFirstShowOf(`main:${view}`),
   });
 
-  renderTable($('od-main-chart-table'), [gran === 'year' ? 'Month' : 'Day', 'O count'],
+  renderTable(byId('od-main-chart-table'), [gran === 'year' ? 'Month' : 'Day', 'O count'],
     buckets.map((b, i) => [b.full, bucketCounts[i]]));
 
   /* ---- heatmap (year containing the anchor) ---- */
-  if (state.navDir) enterPanel($('od-main-chart'), state.navDir);
+  if (state.navDir) enterPanel(byId('od-main-chart'), state.navDir);
 
   const year = start.getFullYear();
   const yearStart = new Date(year, 0, 1);
   const yearEnd = new Date(year + 1, 0, 1);
-  const yearEvents = eventsIn(yearStart, yearEnd);
-  $('od-heatmap-title').textContent = `${year} calendar`;
+  const yearEvents = eventsBetween(yearStart, yearEnd);
+  byId('od-heatmap-title').textContent = `${year} calendar`;
   // The ring marks the selected week/month inside the year; for a whole-year
   // selection it would outline every cell, so it is dropped.
-  renderHeatmap($('od-heatmap'), year, countsByDayMap(yearEvents), gran === 'year' ? null : {
+  renderHeatmap(byId('od-heatmap'), year, countsByDayMap(yearEvents), gran === 'year' ? null : {
     from: dayKey(start),
     to: dayKey(new Date(end.getFullYear(), end.getMonth(), end.getDate() - 1)),
-  }, firstShow(`heat:${year}`));
+  }, isFirstShowOf(`heat:${year}`));
   const monthTotals = MONTHS.map((m, i) => [
     `${m} ${year}`,
-    eventsIn(new Date(year, i, 1), new Date(year, i + 1, 1)).length,
+    eventsBetween(new Date(year, i, 1), new Date(year, i + 1, 1)).length,
   ]);
-  renderTable($('od-heatmap-table'), ['Month', 'O count'], monthTotals);
+  renderTable(byId('od-heatmap-table'), ['Month', 'O count'], monthTotals);
 
   /* ---- patterns + top lists (scoped) ---- */
   const scoped = state.scope === 'period' ? inPeriod : state.events;
   const scopeName = state.scope === 'period' ? periodTitle(gran, start) : 'all time';
-  $('od-scope-caption').textContent = `${scoped.length} ${scoped.length === 1 ? 'entry' : 'entries'} · ${scopeName}`;
+  byId('od-scope-caption').textContent = `${scoped.length} ${scoped.length === 1 ? 'entry' : 'entries'} · ${scopeName}`;
 
   // patterns depend only on the scoped set, so all-time views share one key
   const patternKey = state.scope === 'period' ? `period:${view}` : 'all';
 
   const hourCounts = Array.from({ length: 24 }, () => 0);
   for (const e of scoped) hourCounts[e.date.getHours()]++;
-  renderColumns($('od-hour-chart'), hourCounts.map((v, h) => ({
+  renderColumns(byId('od-hour-chart'), hourCounts.map((v, h) => ({
     label: h % 6 === 0 ? hourLabel(h) : '',
     value: v,
     tip: `<b>${v} ${v === 1 ? 'entry' : 'entries'}</b><br><span class="od-tt-sub">${hourLabel(h)}–${hourLabel((h + 1) % 24)}</span>`,
-  })), { tickEvery: 3, plotHeight: 140, animateIn: firstShow(`hour:${patternKey}`) });
-  renderTable($('od-hour-table'), ['Hour', 'O count'],
+  })), { tickEvery: 3, plotHeight: 140, animateIn: isFirstShowOf(`hour:${patternKey}`) });
+  renderTable(byId('od-hour-table'), ['Hour', 'O count'],
     hourCounts.map((v, h) => [`${hourLabel(h)}–${hourLabel((h + 1) % 24)}`, v]));
 
   const dowCounts = Array.from({ length: 7 }, () => 0);
   for (const e of scoped) dowCounts[(e.date.getDay() + 6) % 7]++;
-  renderColumns($('od-dow-chart'), dowCounts.map((v, i) => ({
+  renderColumns(byId('od-dow-chart'), dowCounts.map((v, i) => ({
     label: DOW[i],
     value: v,
     tip: `<b>${v} ${v === 1 ? 'entry' : 'entries'}</b><br><span class="od-tt-sub">${DOW[i]}</span>`,
-  })), { plotHeight: 140, animateIn: firstShow(`dow:${patternKey}`) });
-  renderTable($('od-dow-table'), ['Weekday', 'O count'], dowCounts.map((v, i) => [DOW[i], v]));
+  })), { plotHeight: 140, animateIn: isFirstShowOf(`dow:${patternKey}`) });
+  renderTable(byId('od-dow-table'), ['Weekday', 'O count'], dowCounts.map((v, i) => [DOW[i], v]));
 
-  const ranksFirst = firstShow(`rank:${patternKey}`);
-  renderRanked($('od-top-scenes'), topBy(scoped, (e) => {
-    const scene = sceneOf(e);
+  const ranksFirst = isFirstShowOf(`rank:${patternKey}`);
+  renderRanked(byId('od-top-scenes'), rankBy(scoped, (e) => {
+    const scene = sceneFor(e);
     if (!scene) return [];
     return [{
       id: e.sceneId,
@@ -969,11 +969,11 @@ function render() {
       meta: scene.studio ? { name: scene.studio, id: scene.studio_id } : undefined,
     }];
   }, 'scenes'), 'No entries in scope.', ranksFirst);
-  renderRanked($('od-top-performers'),
-    topBy(scoped, (e) => sceneOf(e)?.performers || [], 'performers'),
+  renderRanked(byId('od-top-performers'),
+    rankBy(scoped, (e) => sceneFor(e)?.performers || [], 'performers'),
     'No performers tagged.', ranksFirst);
-  renderRanked($('od-top-tags'),
-    topBy(scoped, (e) => sceneOf(e)?.tags || [], 'tags'),
+  renderRanked(byId('od-top-tags'),
+    rankBy(scoped, (e) => sceneFor(e)?.tags || [], 'tags'),
     'No tags on these scenes.', ranksFirst);
 
   renderFacts();
@@ -983,8 +983,8 @@ function render() {
 /** The all-time summary: the figures that do not belong on a chart. */
 function renderFacts() {
   const all = state.events;
-  const el = $('od-facts');
-  clear(el);
+  const el = byId('od-facts');
+  clearChildren(el);
   if (!all.length) {
     el.innerHTML = '<p class="od-empty">No O history recorded yet.</p>';
     return;
@@ -1043,7 +1043,7 @@ function renderFacts() {
 
 /** Explains what the calendar's shades mean. */
 function renderLegend() {
-  const el = $('od-heatmap-legend');
+  const el = byId('od-heatmap-legend');
   el.innerHTML = '<span>Less</span><span class="od-swatches"></span><span>More</span>';
   const sw = el.querySelector('.od-swatches');
   for (let i = 0; i <= 4; i++) {
@@ -1097,7 +1097,7 @@ function syncControls() {
   }
 }
 
-let loading = false;
+let isLoading = false;
 
 /** Turns whatever a source produced into what the page shows.
 
@@ -1119,7 +1119,7 @@ function applyPayload(payload) {
   // Entrance animations are keyed by this, so new data replays them once.
   state.dataVersion = `${payload.events.length}:${payload.events.at(-1)?.t ?? 0}`;
 
-  $('od-source-line').textContent = `${payload.events.length} O entries · ${sourceCaption(payload)}`;
+  byId('od-source-line').textContent = `${payload.events.length} O entries · ${sourceCaption(payload)}`;
   state.loadedAt = new Date(payload.generated_at);
   updateFreshness();
   render();
@@ -1137,14 +1137,14 @@ function sourceCaption(payload) {
 /** The refresh cycle: ask the source, show the answer.
     Holds the busy state briefly so a fast reply still reads as "it did something". */
 async function load(force = false) {
-  if (loading) return;
-  loading = true;
-  const main = $('od-main');
-  const btn = $('od-refresh-btn');
+  if (isLoading) return;
+  isLoading = true;
+  const main = byId('od-main');
+  const btn = byId('od-refresh-btn');
   main.classList.add('od-loading'); // hold the previous render, no skeleton flash
   btn.dataset.busy = 'true';
   btn.disabled = true;
-  $('od-refresh-label').textContent = 'Refreshing…';
+  byId('od-refresh-label').textContent = 'Refreshing…';
   const startedAt = performance.now();
   try {
     // Per-load accumulator: partials merge into it, so a key that arrives in
@@ -1156,17 +1156,17 @@ async function load(force = false) {
     // "the database" was accurate when a snapshot was the source. It is not
     // any more, and the message is the only thing the user sees when a
     // connection fails — it should name what actually failed.
-    $('od-source-line').textContent = `Could not read from Stash: ${err.message}`;
+    byId('od-source-line').textContent = `Could not read from Stash: ${err.message}`;
   } finally {
     // A local read finishes in ~30ms; without a floor the spinner is a flicker
     // that reads as "nothing happened".
     const held = Math.max(0, 320 - (performance.now() - startedAt));
     setTimeout(() => {
       main.classList.remove('od-loading');
-      $('od-refresh-btn').dataset.busy = 'false';
-      $('od-refresh-btn').disabled = false;
-      $('od-refresh-label').textContent = 'Refresh';
-      loading = false;
+      byId('od-refresh-btn').dataset.busy = 'false';
+      byId('od-refresh-btn').disabled = false;
+      byId('od-refresh-label').textContent = 'Refresh';
+      isLoading = false;
     }, held);
   }
 }
@@ -1180,7 +1180,7 @@ function updateFreshness() {
     : `${Math.round(secs / 3600)} h ago`;
   // Not "from Stash": in demo mode nothing was read from Stash, and this line
   // sits directly under a caption that says so.
-  $('od-footer-line').textContent = `Read ${ago} `
+  byId('od-footer-line').textContent = `Read ${ago} `
     + `(${state.loadedAt.toLocaleTimeString()}) · refreshes only on load or when you ask · `
     + `timestamps converted from UTC to ${Intl.DateTimeFormat().resolvedOptions().timeZone}`;
 }
@@ -1203,13 +1203,13 @@ let globalsBound = false;
 
 /** Connects every control to the state it changes.
     Window-level listeners are attached once, since the route can remount. */
-function bind() {
-  $('od-granularity').addEventListener('click', (ev) => {
+function bindControls() {
+  byId('od-granularity').addEventListener('click', (ev) => {
     const btn = ev.target.closest('button');
     if (btn) setGranularity(btn.dataset.gran);
   });
 
-  $('od-scope').addEventListener('click', (ev) => {
+  byId('od-scope').addEventListener('click', (ev) => {
     const btn = ev.target.closest('button');
     if (!btn) return;
     state.scope = btn.dataset.scope;
@@ -1217,13 +1217,13 @@ function bind() {
     render();
   });
 
-  $('od-prev-btn').addEventListener('click', () => step(-1));
-  $('od-next-btn').addEventListener('click', () => step(1));
-  $('od-today-btn').addEventListener('click', () => {
+  byId('od-prev-btn').addEventListener('click', () => stepPeriod(-1));
+  byId('od-next-btn').addEventListener('click', () => stepPeriod(1));
+  byId('od-today-btn').addEventListener('click', () => {
     state.anchor = periodStart(state.gran, new Date());
     render();
   });
-  $('od-refresh-btn').addEventListener('click', () => load(true));
+  byId('od-refresh-btn').addEventListener('click', () => load(true));
   // No cycleTheme here. bindTheme() already binds this button to open the
   // menu, and binding both meant one tap opened the picker *and* advanced the
   // mode — so choosing a palette in Dark mode kicked you to Auto. A disclosure
@@ -1239,8 +1239,8 @@ function bind() {
     if (!dashboardOwnsKeys(ev)) return;
     if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
     const key = ev.key.toLowerCase();
-    if (ev.key === 'ArrowLeft') step(-1);
-    else if (ev.key === 'ArrowRight') step(1);
+    if (ev.key === 'ArrowLeft') stepPeriod(-1);
+    else if (ev.key === 'ArrowRight') stepPeriod(1);
     else if (key === 'w' || key === 'm' || key === 'y') {
       setGranularity({ w: 'week', m: 'month', y: 'year' }[key]);
     } else if (key === 'r') load(true);
@@ -1257,8 +1257,8 @@ function bind() {
 }
 
 /** Moves through time, one period per press. */
-function step(n) {
-  const btn = n < 0 ? $('od-prev-btn') : $('od-next-btn');
+function stepPeriod(n) {
+  const btn = n < 0 ? byId('od-prev-btn') : byId('od-next-btn');
   if (btn.disabled) return;
   state.anchor = shiftPeriod(state.gran, state.anchor, n);
   state.navDir = n; // panels slide in from the side you came from
@@ -1294,11 +1294,11 @@ const theme = {
   // has two, and the choice persists independently of the light one — picking
   // a dark palette must not disturb the light preference, exactly as mode and
   // palette are already kept independent.
-  dark: resolveDark(localStorage.getItem('o-dash-dark')),
+  dark: resolveDarkPalette(localStorage.getItem('o-dash-dark')),
 };
 
 /** Keeps a saved preference working after a palette has been renamed. */
-function resolveDark(stored) {
+function resolveDarkPalette(stored) {
   const name = DARK_ALIASES[stored] ?? stored;
   return name in DARK_NAMES ? name : 'stash';
 }
@@ -1315,8 +1315,8 @@ function applyTheme() {
   vizRoot().setAttribute('data-theme', dark ? theme.dark : theme.light);
 
   const activeName = dark ? DARK_NAMES[theme.dark] : LIGHT_NAMES[theme.light];
-  $('od-theme-btn-label').textContent = theme.mode === 'auto' ? 'Auto' : activeName;
-  $('od-theme-note').textContent = theme.mode === 'auto'
+  byId('od-theme-btn-label').textContent = theme.mode === 'auto' ? 'Auto' : activeName;
+  byId('od-theme-note').textContent = theme.mode === 'auto'
     ? `Following the system — currently ${activeName}.`
     : darkMode
       ? 'Stash matches the host UI; Naughty is the standalone palette.'
@@ -1329,11 +1329,11 @@ function applyTheme() {
   // Under Dark the light choices are swapped out for the dark ones rather than
   // leaving the section empty. In Auto the light list still matters: the system
   // can flip to light at any time.
-  $('od-theme-light').hidden = darkMode;
-  $('od-theme-dark').hidden = !darkMode;
-  $('od-palette-label').textContent = theme.mode === 'auto'
+  byId('od-theme-light').hidden = darkMode;
+  byId('od-theme-dark').hidden = !darkMode;
+  byId('od-palette-label').textContent = theme.mode === 'auto'
     ? 'Light palette (used when light)' : 'Palette';
-  $('od-theme-light').classList.toggle('od-inactive', dark);
+  byId('od-theme-light').classList.toggle('od-inactive', dark);
   for (const b of document.querySelectorAll('#od-theme-light button')) {
     const chosen = b.dataset.light === theme.light;
     b.setAttribute('aria-checked', String(chosen));
@@ -1358,10 +1358,10 @@ function cycleTheme() {
 
 /** Shows or hides the palette picker. */
 function toggleThemeMenu(open) {
-  const menu = $('od-theme-menu');
+  const menu = byId('od-theme-menu');
   const next = open ?? menu.hidden;
   menu.hidden = !next;
-  $('od-theme-btn').setAttribute('aria-expanded', String(next));
+  byId('od-theme-btn').setAttribute('aria-expanded', String(next));
 }
 
 let themeGlobalsBound = false;
@@ -1369,8 +1369,8 @@ let themeGlobalsBound = false;
 /** Connects the palette picker to the theme state.
     Document-level listeners are attached once, since the route can remount. */
 function bindTheme() {
-  $('od-theme-btn').addEventListener('click', (ev) => { ev.stopPropagation(); toggleThemeMenu(); });
-  $('od-theme-menu').addEventListener('click', (ev) => {
+  byId('od-theme-btn').addEventListener('click', (ev) => { ev.stopPropagation(); toggleThemeMenu(); });
+  byId('od-theme-menu').addEventListener('click', (ev) => {
     ev.stopPropagation();
     const btn = ev.target.closest('button');
     if (!btn) return;
@@ -1413,7 +1413,7 @@ function mountDashboard(container, options = {}) {
   readHash();
   renderLegend();
   syncControls();
-  bind();
+  bindControls();
   load();
 }
 
