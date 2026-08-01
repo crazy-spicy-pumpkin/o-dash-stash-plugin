@@ -1,0 +1,582 @@
+/* Five palettes, one set of roles. Each is a single-series design: one accent
+   for the marks, one single-hue ordinal ramp for the calendar. Every ramp was
+   run through the data-viz validator against its own surface (monotone
+   lightness, >= 0.06 step gaps, light end clearing 2:1) — see README.
+
+     light  Aubade · TokyoNight Day · Spicy Pumpkin
+     dark   Stash · Naughty
+
+   Aubade and TokyoNight Day come from the iTerm2 schemes of those names; Naughty
+   is the validated reference instance; Stash copies the host's own colours;
+   Spicy Pumpkin is derived from a pumpkin accent. JS resolves "auto" and
+   stamps data-theme on the mount container, so the palette a chart renders on is
+   always known. It goes on the mount rather than <html> because Stash themes
+   itself off the document root, and only one of them can own that attribute.
+
+   Every rule here is scoped under .od-viz-root. The stylesheet is injected into
+   a page it does not own: a bare `h2` or `*` would restyle the host UI. Class
+   names carry an `od-` prefix for the other direction — Stash is Bootstrap-based
+   and defines its own .card, .btn, .tooltip, .active and .spinner.
+
+   Aubade (default light) — bg #fbf6fb, plum #ae3f84 from the scheme. */
+.od-viz-root{
+  color-scheme: light;
+  --surface-1: #fbf6fb;
+  --plane: #f3ebf5;
+  --text-primary: #33293f;
+  --text-secondary: #5b5068;
+  --text-muted: #857a93;
+  --grid: #ece2ee;
+  --axis: #d8c9dc;
+  --border: rgba(51, 41, 63, 0.12);
+  --series-1: #ae3f84;
+  --series-dim: #e996c4;
+  --ramp-0: #efe6f0;
+  --ramp-1: #e996c4;
+  --ramp-2: #c95a9d;
+  --ramp-3: #992d72;
+  --ramp-4: #660048;
+  --shadow: 0 1px 2px rgba(51, 41, 63, 0.05);
+}/* TokyoNight Day — bg #e1e2e7, blue #2e7de9 from the scheme. */
+.od-viz-root[data-theme="tokyonight-day"]{
+  color-scheme: light;
+  --surface-1: #eaebf0;
+  --plane: #dee0e6;
+  --text-primary: #2c3049;
+  --text-secondary: #4c5578;
+  /* pulled off the scheme's #6172b0 toward slate: captions in the series blue
+     read as links, and text must never wear the data colour */
+  --text-muted: #676c85;
+  --grid: #d5d7e0;
+  --axis: #c3c6d4;
+  --border: rgba(44, 48, 73, 0.12);
+  --series-1: #2e7de9;
+  --series-dim: #79a9f0;
+  --ramp-0: #d9dbe4;
+  --ramp-1: #79a9f0;
+  --ramp-2: #3b7fde;
+  --ramp-3: #0e57b2;
+  --ramp-4: #013575;
+  --shadow: 0 1px 2px rgba(44, 48, 73, 0.05);
+}
+
+.od-viz-root[data-theme="naughty"]{
+  color-scheme: dark;
+  --surface-1: #1a1a19;
+  --plane: #0d0d0d;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #898781;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.10);
+  --series-1: #3987e5;
+  --series-dim: #184f95;
+  --ramp-0: #383835;
+  --ramp-1: #184f95;
+  --ramp-2: #2a78d6;
+  --ramp-3: #6da7ec;
+  --ramp-4: #b7d3f6;
+  --shadow: none;
+}
+
+/* Stash — the host's own default colours, so the dashboard sits inside Stash
+   without looking bolted on. These are Blueprint.js values copied from Stash's
+   stylesheet, not read from it at runtime: the plugin inherits no variables, so
+   nothing here can be invalidated by Stash restyling itself. Surface and plane
+   are Stash's card and body backgrounds; the accent is its --primary.
+
+   The ramp is generated in OKLCH from that accent and validated against this
+   surface, like every other palette here — but it could not simply reuse the
+   Dark palette's lightness steps. Stash's card is L=0.36 against Dark's L=0.20,
+   so the same steps would land the first two at 1.3:1 and make them
+   indistinguishable. The steps are re-solved for this surface: the first sits
+   at 2.05:1, matching the *relationship* the other ramps have rather than
+   copying their numbers.
+
+   Two ceilings are imposed by the surface itself and cannot be designed away:
+   pure white on it is only 10.68:1, so the brightest text reaches 10.01:1 and
+   the ramp's top step 7.61:1, against 9.98:1 on the darker palettes. Every
+   invariant that is achievable is met — monotone lightness, minimum step gap
+   0.111 (floor 0.06, other palettes 0.093), single hue within 0.8 degrees. */
+.od-viz-root[data-theme="stash"]{
+  color-scheme: dark;
+  --surface-1: #30404d;   /* Stash .card            */
+  --plane: #202b33;       /* Stash body             */
+  --text-primary: #f5f8fa;
+  --text-secondary: #ced9e0;
+  --text-muted: #a7b6c2;  /* 5.14:1 — clears the 3.78:1 the others set */
+  --grid: #3c4c59;
+  --axis: #4a5b69;
+  --border: #40505e;
+  --series-1: #48aff0;    /* Stash link blue, 4.41:1 on the card */
+  --series-dim: #2b95d6;
+  --ramp-0: #404f5b;      /* no activity — 1.27:1, just clear of the surface */
+  --ramp-1: #0072b0;      /* 2.05:1 */
+  --ramp-2: #0096e7;      /* 3.31:1 */
+  --ramp-3: #6bbbfa;      /* 5.14:1 */
+  --ramp-4: #bbdefb;      /* 7.61:1 */
+  --shadow: none;
+}/* Spicy Pumpkin — pumpkin flesh rather than cartoon orange: a burnt spice
+   orange that stays readable as ink and does not vibrate against a warm
+   surface. Accent #d2601a, hue 46.4 deg; ramp generated from it in OKLCH and
+   validated against this palette's own surface like every other one here.
+
+   Warm neutrals throughout: the greys are pulled toward the hue so the palette
+   reads as one family instead of orange marks sitting on a cold page. Muted
+   text is the one value that had to be re-solved — the obvious lightness put it
+   at 3.67:1, under the 3.78:1 the other palettes hold, so it was darkened. */
+.od-viz-root[data-theme="spicy-pumpkin"]{
+  color-scheme: light;
+  --surface-1: #fdf7f0;
+  --plane: #f6ebdf;
+  --text-primary: #3c2316;    /* 13.67:1 */
+  --text-secondary: #6a5044;  /*  6.94:1 */
+  --text-muted: #8e766a;      /*  3.99:1 — clears the 3.78:1 bar */
+  --grid: #f5eae5;
+  --axis: #e4cdc2;
+  --border: rgba(60, 35, 22, 0.12);
+  --series-1: #d2601a;        /*  3.64:1, between the other two light palettes */
+  --series-dim: #f19d74;
+  --ramp-0: #f6e6df;          /*  1.14:1 — no activity */
+  --ramp-1: #f19d74;          /*  2.01:1 */
+  --ramp-2: #d36320;          /*  3.54:1 */
+  --ramp-3: #994000;          /*  6.39:1 */
+  --ramp-4: #5e2400;          /* 11.42:1 */
+  --shadow: 0 1px 2px rgba(60, 35, 22, 0.05);
+}
+
+/* Palette swaps ease rather than snap. */
+.od-viz-root, .od-viz-root .od-card, .od-viz-root .od-tile, .od-viz-root .od-btn, .od-viz-root .od-segmented, .od-viz-root .od-tooltip, .od-viz-root .od-theme-menu{
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+.od-viz-root, .od-viz-root *{ box-sizing: border-box; }
+
+.od-viz-root{
+  margin: 0;
+  padding: 24px clamp(16px, 4vw, 40px) 48px;
+  background: var(--plane);
+  color: var(--text-primary);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.od-viz-root h1{
+  font-size: clamp(24px, 2.6vw, 32px);
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.od-viz-root h2{ font-size: 15px; font-weight: 600; margin: 0; }
+.od-viz-root h3{ font-size: 14px; font-weight: 600; margin: 0 0 2px; }
+
+.od-viz-root p{ margin: 0; }
+
+.od-viz-root .od-caption{ color: var(--text-muted); font-size: 12.5px; }
+.od-viz-root .od-label{
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  text-transform: none;
+  margin-bottom: 2px;
+}/* ---------- top bar & controls ---------- */
+.od-viz-root .od-topbar{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.od-viz-root .od-source{ color: var(--text-muted); font-size: 12.5px; margin-top: 6px; }
+.od-viz-root .od-topbar-actions{ display: flex; gap: 8px; align-items: center; }
+.od-viz-root .od-title-mark{
+  width: 0.92em;
+  height: 0.92em;
+  flex: none;
+  fill: var(--series-1);
+  transition: fill 0.25s ease;
+}
+/* ---------- theme switcher ---------- */
+.od-viz-root .od-theme-switcher{ position: relative; }
+.od-viz-root .od-theme-dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--series-1);
+  display: inline-block;
+  margin-right: 7px;
+  vertical-align: -1px;
+  box-shadow: inset 0 0 0 1px var(--border);
+  transition: background-color 0.25s ease;
+}
+.od-viz-root .od-theme-menu{
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  width: 232px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  transform-origin: top right;
+  animation: od-menu-in 0.16s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.od-viz-root .od-theme-menu[hidden]{ display: none; }
+@keyframes od-menu-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+.od-viz-root .od-menu-label{ color: var(--text-muted); font-size: 11.5px; margin-top: 2px; }
+.od-viz-root .od-menu-note{ color: var(--text-muted); font-size: 11.5px; line-height: 1.35; margin-top: 2px; }
+.od-viz-root .od-theme-choices{ display: flex; flex-direction: column; gap: 4px; }
+.od-viz-root .od-theme-choices[hidden], .od-viz-root .od-menu-label[hidden]{ display: none; }
+.od-viz-root .od-theme-choices button{
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  padding: 7px 9px;
+  border-radius: 9px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+.od-viz-root .od-theme-choices button:hover{ background: var(--plane); color: var(--text-primary); }/* Active = the palette on screen right now. */
+.od-viz-root .od-theme-choices button.od-is-active{
+  background: var(--plane);
+  color: var(--text-primary);
+  font-weight: 600;
+  border-color: var(--border);
+}/* Chosen but not showing (dark is on): a check, no active highlight. */
+.od-viz-root .od-theme-choices button[aria-checked="true"]::after{
+  content: "✓";
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.od-viz-root .od-theme-choices button.od-is-active::after{ color: var(--text-primary); }
+.od-viz-root .od-theme-choices.od-inactive{ opacity: 0.62; }
+.od-viz-root .od-theme-choices.od-inactive button[aria-checked="true"]{ color: var(--text-secondary); }
+.od-viz-root .od-swatch-row{ display: flex; gap: 2px; }
+.od-viz-root .od-swatch-row i{
+  width: 11px;
+  height: 16px;
+  border-radius: 2px;
+  display: block;
+  /* mid-gray reads as an edge on both light and dark surfaces, so a near-black
+     swatch stays visible in the dark menu */
+  box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.38);
+}
+
+.od-viz-root .od-btn{
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  color: var(--text-secondary);
+  border-radius: 8px;
+  padding: 6px 11px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  min-height: 30px;
+}
+.od-viz-root .od-btn:hover{ color: var(--text-primary); border-color: var(--axis); }
+.od-viz-root .od-btn:disabled{ opacity: 0.4; cursor: default; }
+.od-viz-root .od-btn.od-icon{ min-width: 32px; font-size: 17px; line-height: 1; padding: 4px 10px; }
+
+.od-viz-root #od-refresh-btn{ display: inline-flex; align-items: center; gap: 7px; }
+.od-viz-root #od-refresh-btn[data-busy="true"]{ color: var(--text-muted); cursor: progress; }
+.od-viz-root .od-spinner{
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid var(--axis);
+  border-top-color: var(--series-1);
+  display: none;
+  animation: od-spin 0.7s linear infinite;
+}
+.od-viz-root #od-refresh-btn[data-busy="true"] .od-spinner{ display: block; }
+@keyframes od-spin { to { transform: rotate(360deg); } }/* The spin is a status indicator, so it survives reduced-motion — slowed, not stopped. */
+@media (prefers-reduced-motion: reduce){
+  .od-viz-root .od-spinner{ animation-duration: 2s !important; }
+}
+
+.od-viz-root .od-controls{
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.od-viz-root .od-segmented{
+  display: inline-flex;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 2px;
+  gap: 2px;
+}
+.od-viz-root .od-segmented button{
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 13px;
+  padding: 5px 13px;
+  border-radius: 7px;
+  cursor: pointer;
+  min-height: 28px;
+}
+.od-viz-root .od-segmented button[aria-selected="true"]{
+  background: var(--plane);
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.od-viz-root .od-segmented.od-small button{ font-size: 12.5px; padding: 4px 10px; }
+
+/* The theme menu is a column flex container, so align-items: stretch widens
+   this inline-flex control to the full menu width while its buttons stay
+   packed at the leading edge — leaving dead space after the last one. Share
+   the width instead, so the group fills the control and Dark sits on the
+   trailing edge. */
+.od-viz-root .od-theme-menu .od-segmented button{ flex: 1; text-align: center; }
+
+.od-viz-root .od-period-nav{ display: flex; align-items: center; gap: 8px; }
+.od-viz-root .od-period-label{
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 210px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}/* ---------- layout ---------- */
+.od-viz-root main{ display: flex; flex-direction: column; gap: 16px; }
+.od-viz-root main{ transition: opacity 0.18s ease; }
+.od-viz-root main.od-loading{ opacity: 0.55; }
+
+.od-viz-root .od-card{
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+}
+.od-viz-root .od-card-head{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.od-viz-root .od-grid-hero{
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) 1fr;
+  gap: 16px;
+}
+.od-viz-root .od-tiles{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+.od-viz-root .od-grid-two{ display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.od-viz-root .od-grid-three{ display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 16px; }
+
+.od-viz-root .od-section{ display: flex; flex-direction: column; }
+.od-viz-root .od-section-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 10px 0 2px;
+}
+.od-viz-root .od-section-caption{ margin-bottom: 12px; }/* ---------- figures ---------- */
+.od-viz-root .od-hero-card{ display: flex; flex-direction: column; }
+.od-viz-root .od-hero-value{
+  font-size: 56px;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 2px 0 4px;
+}
+.od-viz-root .od-delta{ color: var(--text-secondary); font-size: 13px; }
+.od-viz-root .od-sparkline{ margin-top: auto; padding-top: 14px; }
+.od-viz-root .od-hero-card .od-caption{ margin-top: 4px; }
+
+.od-viz-root .od-tile{
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+}
+.od-viz-root .od-tile-value{
+  font-size: 27px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 2px 0 1px;
+}
+.od-viz-root .od-tile-sub{ color: var(--text-muted); font-size: 12.5px; }
+
+.od-viz-root .od-facts{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px 22px;
+  margin-top: 12px;
+}
+.od-viz-root .od-fact-label{ color: var(--text-muted); font-size: 12.5px; }
+.od-viz-root .od-fact-value{ font-size: 15px; font-weight: 600; margin-top: 1px; }/* ---------- charts ---------- */
+.od-viz-root .od-chart{ position: relative; width: 100%; }
+.od-viz-root .od-chart svg{ display: block; width: 100%; overflow: visible; }
+.od-viz-root .od-empty{
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 28px 0;
+  text-align: center;
+}/* Bars grow from the baseline: the path's own box is the transform reference,
+   so scaleY(0) collapses it onto the axis rather than the SVG origin. */
+.od-viz-root .od-bar{ transform-box: fill-box; transform-origin: bottom; }
+.od-viz-root .od-cell{ transform-box: fill-box; transform-origin: center; }
+
+.od-viz-root .od-gridline{ stroke: var(--grid); stroke-width: 1; }
+.od-viz-root .od-baseline{ stroke: var(--axis); stroke-width: 1; }
+.od-viz-root .od-tick-text{ fill: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.od-viz-root .od-bar{ fill: var(--series-1); }
+.od-viz-root .od-bar-label{ fill: var(--text-secondary); font-size: 11px; font-weight: 600; text-anchor: middle; }
+.od-viz-root .od-hit{ fill: transparent; }
+.od-viz-root .od-hit:focus{ outline: none; }
+.od-viz-root .od-bar.od-active{ filter: brightness(1.12); }
+.od-viz-root .od-band-wash{ fill: var(--grid); opacity: 0; transition: opacity 0.08s ease-out; }
+.od-viz-root .od-band-wash.od-on{ opacity: 0.45; }
+.od-viz-root .od-spark-line{ fill: none; stroke: var(--series-dim); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.od-viz-root .od-spark-dot{ fill: var(--series-1); stroke: var(--surface-1); stroke-width: 2; }
+
+.od-viz-root .od-heatmap-wrap{ overflow-x: auto; padding-bottom: 4px; }
+.od-viz-root .od-cell{ rx: 2.5; }
+.od-viz-root .od-cell-sel{ fill: none; stroke: var(--text-muted); stroke-width: 1; rx: 2.5; }
+.od-viz-root .od-month-text{ fill: var(--text-muted); font-size: 11px; }
+.od-viz-root .od-dow-text{ fill: var(--text-muted); font-size: 10px; }
+
+.od-viz-root .od-scale-legend{ display: flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 12px; }
+.od-viz-root .od-scale-legend .od-swatches{ display: flex; gap: 2px; }
+.od-viz-root .od-scale-legend i{
+  width: 12px;
+  height: 12px;
+  border-radius: 2.5px;
+  display: block;
+  box-shadow: inset 0 0 0 1px var(--border);
+}/* ---------- ranked lists ---------- */
+.od-viz-root .od-ranked{ display: flex; flex-direction: column; gap: 9px; margin-top: 10px; }
+.od-viz-root .od-rank-row{ display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; }
+.od-viz-root .od-rank-name{
+  font-size: 13px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.od-viz-root a.od-rank-name, .od-viz-root a.od-rank-meta{
+  text-decoration: none;
+  text-decoration-color: var(--axis);
+  text-underline-offset: 3px;
+  transition: color 0.12s ease, text-decoration-color 0.12s ease;
+}
+.od-viz-root a.od-rank-name::after{
+  content: " ↗";
+  color: var(--text-muted);
+  font-size: 11px;
+  opacity: 0;
+  transition: opacity 0.14s ease;
+}
+.od-viz-root a.od-rank-name:hover, .od-viz-root a.od-rank-name:focus-visible{ text-decoration: underline; text-decoration-color: currentColor; }
+.od-viz-root a.od-rank-name:hover::after, .od-viz-root a.od-rank-name:focus-visible::after{ opacity: 1; }
+.od-viz-root a.od-rank-meta:hover, .od-viz-root a.od-rank-meta:focus-visible{ color: var(--text-secondary); text-decoration: underline; }
+.od-viz-root .od-rank-value{ font-size: 13px; font-weight: 600; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.od-viz-root .od-rank-track{ grid-column: 1 / -1; height: 8px; background: var(--ramp-0); border-radius: 4px; }
+.od-viz-root .od-rank-fill{
+  height: 8px;
+  background: var(--series-1);
+  border-radius: 0 4px 4px 0;
+  min-width: 3px;
+  transform-origin: left center;
+  transition: width 0.3s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.od-viz-root .od-rank-fill.od-grow{ animation: od-rank-grow 0.42s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+@keyframes od-rank-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.od-viz-root .od-rank-meta{ grid-column: 1 / -1; color: var(--text-muted); font-size: 11.5px; margin-top: -2px; }
+.od-viz-root .od-rank-row:hover .od-rank-fill{ filter: brightness(1.08); }/* ---------- tables ---------- */
+.od-viz-root .od-table-view{ margin-top: 12px; }
+.od-viz-root .od-table-view summary{
+  color: var(--text-muted);
+  font-size: 12.5px;
+  cursor: pointer;
+  width: fit-content;
+}
+.od-viz-root .od-table-view summary:hover{ color: var(--text-secondary); }
+.od-viz-root table{ border-collapse: collapse; margin-top: 10px; font-size: 13px; width: 100%; max-width: 520px; }
+.od-viz-root th, .od-viz-root td{ text-align: left; padding: 5px 12px 5px 0; border-bottom: 1px solid var(--grid); }
+.od-viz-root td:last-child, .od-viz-root th:last-child{ text-align: right; font-variant-numeric: tabular-nums; }
+.od-viz-root th{ color: var(--text-muted); font-weight: 500; font-size: 12px; }/* ---------- tooltip ---------- */
+.od-viz-root .od-tooltip{
+  position: fixed;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 7px 10px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+  max-width: 280px;
+  transition: opacity 0.08s ease-out;
+}
+.od-viz-root .od-tooltip{
+  transform: translateY(3px);
+  transition: opacity 0.1s ease-out, transform 0.1s ease-out,
+              left 0.13s cubic-bezier(0.2, 0.8, 0.3, 1), top 0.13s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.od-viz-root .od-tooltip.od-show{ opacity: 1; transform: none; }/* First appearance shouldn't glide in from wherever it last was. */
+.od-viz-root .od-tooltip.od-jump{ transition: opacity 0.1s ease-out, transform 0.1s ease-out; }
+.od-viz-root .od-tooltip b{ font-weight: 600; }
+.od-viz-root .od-tooltip .od-tt-sub{ color: var(--text-muted); }/* ---------- footer ---------- */
+.od-viz-root .od-footer{ margin-top: 26px; color: var(--text-muted); font-size: 12px; display: flex; flex-direction: column; gap: 3px; }
+
+@media (max-width: 720px) {
+  .od-viz-root .od-grid-hero{ grid-template-columns: 1fr; }
+  .od-viz-root .od-period-label{ min-width: 150px; }
+  .od-viz-root .od-hero-value{ font-size: 46px; }
+}
+
+@media print {
+  .od-viz-root{ background: #fff; }
+  .od-viz-root .od-topbar-actions, .od-viz-root .od-controls, .od-viz-root .od-tooltip{ display: none; }
+}/* Motion is decoration here — every value is also in a label or the table. */
+@media (prefers-reduced-motion: reduce){
+  .od-viz-root, .od-viz-root *, .od-viz-root *::before, .od-viz-root *::after{
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

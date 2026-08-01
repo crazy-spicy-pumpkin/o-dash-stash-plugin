@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CSS leak check</title>
+<!--
+  Two questions, and they need different experiments.
+
+  OUTBOUND — does styles.css reach host elements? Cannot be answered by
+  comparing against UA defaults once Stash's stylesheet is present, because
+  Bootstrap changes those same properties itself: an early version of this page
+  reported five failures that were all Bootstrap's own doing. It is a
+  DIFFERENTIAL question — measure the host elements with and without our
+  stylesheet, holding everything else constant, and require the two to match.
+
+  INBOUND — does Bootstrap reach our elements? That one is a direct assertion,
+  but only meaningful with Stash's real stylesheet loaded.
+
+  Query parameters, so one page serves every arm of the experiment:
+    ?host=1   load Stash's own bundle first, as the plugin gets it
+    ?ours=0   omit styles.css (the control arm for the outbound diff)
+
+  Driven by tools/leak-check.sh, which runs the arms and compares them.
+-->
+<script>
+  const params = new URLSearchParams(location.search);
+  if (params.get('host') === '1') document.write('<link rel="stylesheet" href="/stash-ui.css">');
+  if (params.get('ours') !== '0') document.write('<link rel="stylesheet" href="/src/styles.css">');
+</script>
+<style>
+  #report { font: 12px/1.5 ui-monospace, Menlo, monospace; white-space: pre; }
+  /* Pin the page geometry. Bootstrap's reboot zeroes the UA body margin, which
+     makes every element 16px wider — a difference in the test page, not in
+     anything the plugin does. Without this the inbound comparison reports a
+     width change on every element and buries a real regression in noise.
+     Ids outrank both stylesheets, so this holds in all four arms. */
+  html, body { margin: 0; padding: 0; }
+  #host, #mount { width: 700px; }
+</style>
+</head>
+<body>
+
+<!-- Host-side markup: the element types the dashboard styles, and the
+     Bootstrap class names that collided before the od- prefix existed. -->
+<div id="host">
+  <h1 id="h-h1">host h1</h1>
+  <h2 id="h-h2">host h2</h2>
+  <h3 id="h-h3">host h3</h3>
+  <p id="h-p">host p</p>
+  <a id="h-a" href="#x">host link</a>
+  <div id="h-card" class="card">host .card</div>
+  <button id="h-btn" class="btn" type="button">host .btn</button>
+  <div id="h-tooltip" class="tooltip">host .tooltip</div>
+  <div id="h-spinner" class="spinner">host .spinner</div>
+  <div id="h-tile" class="tile">host .tile</div>
+  <div id="h-label" class="label">host .label</div>
+  <div id="h-active" class="active">host .active</div>
+  <table id="h-table"><tbody><tr><td id="h-td">cell</td></tr></tbody></table>
+</div>
+
+<!-- The mount, with our own markup inside it. -->
+<div class="od-viz-root" id="mount">
+  <h2 id="m-h2">mounted h2</h2>
+  <p id="m-p">mounted p</p>
+  <div id="m-card" class="od-card">mounted .od-card</div>
+  <button id="m-btn" class="od-btn" type="button">mounted .od-btn</button>
+</div>
+
+<pre id="report"></pre>
+<script>
+const PROPS = ['fontSize', 'fontFamily', 'fontWeight', 'marginTop', 'marginBottom',
+  'paddingTop', 'paddingLeft', 'borderTopWidth', 'borderRadius', 'color',
+  'backgroundColor', 'position', 'display', 'boxSizing', 'animationName', 'width'];
+
+const HOST_IDS = ['h-h1', 'h-h2', 'h-h3', 'h-p', 'h-a', 'h-card', 'h-btn', 'h-tooltip',
+  'h-spinner', 'h-tile', 'h-label', 'h-active', 'h-td'];
+const MOUNT_IDS = ['m-h2', 'm-p', 'm-card', 'm-btn'];
+
+function measure(ids) {
+  const out = {};
+  for (const id of ids) {
+    const cs = getComputedStyle(document.getElementById(id));
+    out[id] = Object.fromEntries(PROPS.map((p) => [p, cs[p]]));
+  }
+  return out;
+}
+
+const report = {
+  host: measure(HOST_IDS),
+  mount: measure(MOUNT_IDS),
+  stashCssLoaded: [...document.styleSheets].some((s) => (s.href || '').includes('stash-ui')),
+  oursLoaded: [...document.styleSheets].some((s) => (s.href || '').includes('styles.css')),
+};
+// Emitted as JSON for the driver to diff. Nothing here touches the library.
+document.getElementById('report').textContent = JSON.stringify(report);
+</script>
+</body>
+</html>

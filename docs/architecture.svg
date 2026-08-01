@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 812" width="820" height="812" role="img" aria-label="O Dashboard — Architecture">
+<rect width="820" height="812" fill="#ffffff"/>
+<text x="410.0" y="30.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="24" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">O Dashboard — Architecture</text>
+<text x="410.0" y="57.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#757575" text-anchor="middle" font-weight="400" dominant-baseline="middle">rounded panels are boundaries — where the code runs</text>
+<rect x="50" y="82" width="700" height="156" rx="12" fill="#dbe4ff" fill-opacity="0.45" stroke="#4a9eed" stroke-width="1"/>
+<text x="68.0" y="99.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#2563eb" text-anchor="start" font-weight="400" dominant-baseline="middle">1 · Browser — any device that can reach Stash</text>
+<rect x="80" y="118" width="300" height="46" rx="10" fill="#a5d8ff" fill-opacity="1" stroke="#4a9eed" stroke-width="2"/>
+<text x="230.0" y="142.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">Stash UI (React) + PluginApi</text>
+<rect x="420" y="118" width="300" height="46" rx="10" fill="#ffd8a8" fill-opacity="1" stroke="#f59e0b" stroke-width="2"/>
+<text x="570.0" y="142.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">route /o-dashboard</text>
+<rect x="80" y="174" width="640" height="46" rx="10" fill="#ffd8a8" fill-opacity="1" stroke="#f59e0b" stroke-width="2"/>
+<text x="400.0" y="198.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">app.js — buckets, charts, themes (no deps)</text>
+<line x1="300.0" y1="240.0" x2="300.0" y2="286.0" stroke="#8b5cf6" stroke-width="2"/>
+<polygon points="300.0,296.0 295.5,286.0 304.5,286.0" fill="#8b5cf6"/>
+<rect x="248.5" y="258.0" width="103.0" height="20" rx="4" fill="#ffffff"/>
+<text x="300.0" y="268.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#3f3f3f" text-anchor="middle" font-weight="400" dominant-baseline="middle">POST /graphql</text>
+<line x1="500.0" y1="296.0" x2="500.0" y2="250.0" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="7 5"/>
+<polygon points="500.0,240.0 504.5,250.0 495.5,250.0" fill="#8b5cf6"/>
+<rect x="444.9" y="258.0" width="110.1" height="20" rx="4" fill="#ffffff"/>
+<text x="500.0" y="268.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#3f3f3f" text-anchor="middle" font-weight="400" dominant-baseline="middle">JSON · RFC3339</text>
+<rect x="50" y="298" width="700" height="156" rx="12" fill="#e5dbff" fill-opacity="0.45" stroke="#8b5cf6" stroke-width="1"/>
+<text x="68.0" y="315.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#6d28d9" text-anchor="start" font-weight="400" dominant-baseline="middle">2 · Stash server — same origin, session cookie</text>
+<rect x="80" y="334" width="300" height="46" rx="10" fill="#d0bfff" fill-opacity="1" stroke="#8b5cf6" stroke-width="2"/>
+<text x="230.0" y="358.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">/graphql · findScenes + stats</text>
+<rect x="400" y="334" width="320" height="46" rx="10" fill="#ffd8a8" fill-opacity="1" stroke="#f59e0b" stroke-width="2"/>
+<text x="560.0" y="358.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">the plugin’s files, served here</text>
+<rect x="80" y="390" width="640" height="46" rx="10" fill="#d0bfff" fill-opacity="1" stroke="#8b5cf6" stroke-width="2"/>
+<text x="400.0" y="414.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">dataloaders batch o_history / play_history</text>
+<line x1="400.0" y1="516.0" x2="400.0" y2="466.0" stroke="#22c55e" stroke-width="2"/>
+<polygon points="400.0,456.0 404.5,466.0 395.5,466.0" fill="#22c55e"/>
+<rect x="377.1" y="476.0" width="45.8" height="20" rx="4" fill="#ffffff"/>
+<text x="400.0" y="486.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#3f3f3f" text-anchor="middle" font-weight="400" dominant-baseline="middle">reads</text>
+<rect x="50" y="514" width="700" height="158" rx="12" fill="#d3f9d8" fill-opacity="0.45" stroke="#22c55e" stroke-width="1"/>
+<text x="68.0" y="531.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#15803d" text-anchor="start" font-weight="400" dominant-baseline="middle">3 · Data — read-only, one direction</text>
+<rect x="120" y="548" width="200" height="62" rx="10" fill="#a5d8ff" fill-opacity="1" stroke="#4a9eed" stroke-width="2"/>
+<text x="220.0" y="580.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">Stash app</text>
+<line x1="324.0" y1="579.0" x2="366.0" y2="579.0" stroke="#f59e0b" stroke-width="2"/>
+<polygon points="376.0,579.0 366.0,583.5 366.0,574.5" fill="#f59e0b"/>
+<text x="350.0" y="565.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#3f3f3f" text-anchor="middle" font-weight="400" dominant-baseline="middle">writes</text>
+<rect x="380" y="548" width="220" height="62" rx="10" fill="#b2f2bb" fill-opacity="1" stroke="#22c55e" stroke-width="2"/>
+<text x="490.0" y="580.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">stash-go.sqlite</text>
+<rect x="120" y="622" width="480" height="32" rx="10" fill="#ffc9c9" fill-opacity="0.65" stroke="#ef4444" stroke-width="1"/>
+<text x="360.0" y="639.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle" font-weight="400" dominant-baseline="middle">the plugin never opens this file</text>
+<text x="70.0" y="747.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#757575" text-anchor="start" font-weight="400" dominant-baseline="middle">The plugin is three files of JS and one of CSS. Stash serves them,</text>
+<text x="70.0" y="771.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#757575" text-anchor="start" font-weight="400" dominant-baseline="middle">runs them in its own page, and answers their queries.</text>
+<text x="70.0" y="795.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#757575" text-anchor="start" font-weight="400" dominant-baseline="middle">Standalone: the same files from any origin, with an ApiKey header.</text>
+</svg>

@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 792" width="880" height="792" role="img" aria-label="Data — the shapes, and what turns into what">
+<rect width="880" height="792" fill="#ffffff"/>
+<text x="440.0" y="30.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="24" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">Data — the shapes, and what turns into what</text>
+<text x="440.0" y="57.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#757575" text-anchor="middle" font-weight="400" dominant-baseline="middle">three shapes, two transformations</text>
+<rect x="40" y="84" width="800" height="118" rx="12" fill="#e5dbff" fill-opacity="0.45" stroke="#8b5cf6" stroke-width="1"/>
+<text x="58.0" y="101.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#6d28d9" text-anchor="start" font-weight="400" dominant-baseline="middle">1 · what Stash returns — one row per scene, history nested inside</text>
+<rect x="60" y="120" width="760" height="66" rx="10" fill="#d0bfff" fill-opacity="1" stroke="#8b5cf6" stroke-width="2"/>
+<text x="440.0" y="154.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">findScenes.scenes[] · { id, title, studio, performers, tags, o_history[] }</text>
+<line x1="440.0" y1="204.0" x2="440.0" y2="240.0" stroke="#f59e0b" stroke-width="2"/>
+<polygon points="440.0,250.0 435.5,240.0 444.5,240.0" fill="#f59e0b"/>
+<rect x="342.1" y="217.0" width="195.9" height="20" rx="4" fill="#ffffff"/>
+<text x="440.0" y="227.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#3f3f3f" text-anchor="middle" font-weight="400" dominant-baseline="middle">graphql-source.js reshapes</text>
+<rect x="40" y="252" width="800" height="168" rx="12" fill="#dbe4ff" fill-opacity="0.45" stroke="#4a9eed" stroke-width="1"/>
+<text x="58.0" y="269.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#2563eb" text-anchor="start" font-weight="400" dominant-baseline="middle">2 · the payload — the contract every source satisfies</text>
+<rect x="60" y="288" width="380" height="54" rx="10" fill="#a5d8ff" fill-opacity="1" stroke="#4a9eed" stroke-width="2"/>
+<text x="250.0" y="316.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">events[] · { t: epoch ms, s: scene id }</text>
+<rect x="456" y="288" width="364" height="54" rx="10" fill="#a5d8ff" fill-opacity="1" stroke="#4a9eed" stroke-width="2"/>
+<text x="638.0" y="316.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">scenes{} · keyed by id</text>
+<rect x="60" y="350" width="380" height="54" rx="10" fill="#a5d8ff" fill-opacity="1" stroke="#4a9eed" stroke-width="2"/>
+<text x="250.0" y="378.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">views[] · epoch ms, no scene</text>
+<rect x="456" y="350" width="364" height="54" rx="10" fill="#a5d8ff" fill-opacity="1" stroke="#4a9eed" stroke-width="2"/>
+<text x="638.0" y="378.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">library_scenes · stash_url · caption</text>
+<line x1="440.0" y1="422.0" x2="440.0" y2="458.0" stroke="#f59e0b" stroke-width="2"/>
+<polygon points="440.0,468.0 435.5,458.0 444.5,458.0" fill="#f59e0b"/>
+<rect x="334.9" y="435.0" width="210.2" height="20" rx="4" fill="#ffffff"/>
+<text x="440.0" y="445.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#3f3f3f" text-anchor="middle" font-weight="400" dominant-baseline="middle">app.js parses, once per load</text>
+<rect x="40" y="470" width="800" height="130" rx="12" fill="#d3f9d8" fill-opacity="0.45" stroke="#22c55e" stroke-width="1"/>
+<text x="58.0" y="487.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#15803d" text-anchor="start" font-weight="400" dominant-baseline="middle">3 · what the dashboard holds — ready to bucket and draw</text>
+<rect x="60" y="506" width="380" height="54" rx="10" fill="#b2f2bb" fill-opacity="1" stroke="#22c55e" stroke-width="2"/>
+<text x="250.0" y="534.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">state.events[] · { date, day, sceneId }</text>
+<rect x="456" y="506" width="364" height="54" rx="10" fill="#b2f2bb" fill-opacity="1" stroke="#22c55e" stroke-width="2"/>
+<text x="638.0" y="534.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">state.views[] · sorted epoch ms</text>
+<rect x="60" y="566" width="760" height="26" rx="10" fill="#fff3bf" fill-opacity="0.65" stroke="#f59e0b" stroke-width="1"/>
+<text x="440.0" y="580.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle" font-weight="400" dominant-baseline="middle">day is a calendar-day integer, computed in the reader's local time</text>
+<text x="58.0" y="635.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="start" font-weight="400" dominant-baseline="middle">One event, all the way through:</text>
+<rect x="58" y="652" width="268" height="48" rx="10" fill="#d0bfff" fill-opacity="1" stroke="#8b5cf6" stroke-width="2"/>
+<text x="192.0" y="677.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">"2026-01-03T22:15:00+05:30"</text>
+<line x1="332.0" y1="676.0" x2="362.0" y2="676.0" stroke="#f59e0b" stroke-width="2"/>
+<polygon points="372.0,676.0 362.0,680.5 362.0,671.5" fill="#f59e0b"/>
+<rect x="378" y="652" width="214" height="48" rx="10" fill="#a5d8ff" fill-opacity="1" stroke="#4a9eed" stroke-width="2"/>
+<text x="485.0" y="677.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">{ t: 1767458700000, s: 7 }</text>
+<line x1="598.0" y1="676.0" x2="628.0" y2="676.0" stroke="#f59e0b" stroke-width="2"/>
+<polygon points="638.0,676.0 628.0,680.5 628.0,671.5" fill="#f59e0b"/>
+<rect x="644" y="652" width="226" height="48" rx="10" fill="#b2f2bb" fill-opacity="1" stroke="#22c55e" stroke-width="2"/>
+<text x="757.0" y="677.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">{ date, day, sceneId: "7" }</text>
+<text x="58.0" y="731.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#757575" text-anchor="start" font-weight="400" dominant-baseline="middle">The offset is honoured, never sliced off: that instant is 16:45 UTC, so it can</text>
+<text x="58.0" y="755.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#757575" text-anchor="start" font-weight="400" dominant-baseline="middle">sort before a 23:45Z event on the following line. tools/unit.mjs pins exactly this.</text>
+</svg>

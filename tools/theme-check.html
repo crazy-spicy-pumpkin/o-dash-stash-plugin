@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>theme check</title>
+<link rel="stylesheet" href="/src/styles.css">
+<style>#out { font: 12px/1.6 ui-monospace, Menlo, monospace; white-space: pre; }</style>
+</head>
+<body>
+<!--
+  Theme behaviour: defaults, switching, persistence, and the separation between
+  the mode control and the palette pickers.
+
+  The last group exists because of a real bug. The theme button had two click
+  handlers — one opening the menu, one cycling the mode — so tapping it to pick
+  a palette also advanced Dark to Auto. An earlier version of this file checked
+  which palette was applied after each click but never checked that the *mode*
+  had stayed put, so it passed throughout. Assert what should NOT change, not
+  only what should.
+-->
+<div class="od-viz-root" id="mount"></div>
+<pre id="out"></pre>
+<script src="/src/graphql-source.js"></script>
+<script>
+// ?upgrade=<old-value> simulates a profile that stored the dark palette under
+// a name it no longer has. The palette has been renamed twice — `dark` then
+// `spicy`, now `naughty` — and BOTH old values are still out there. An
+// unrecognised value would stamp a data-theme no rule matches, and the
+// dashboard would render with every custom property unset.
+const OLD = new URLSearchParams(location.search).get('upgrade');
+const UPGRADE = !!OLD;
+localStorage.clear();
+if (UPGRADE) localStorage.setItem('o-dash-dark', OLD);
+fetch('/src/index.html').then((r) => r.text()).then((html) => {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  for (const s of doc.body.querySelectorAll('script')) s.remove();
+  document.getElementById('mount').innerHTML = doc.body.innerHTML;
+  const s = document.createElement('script');
+  s.src = '/src/app.js';
+  s.onload = () => setTimeout(run, 1200);
+  document.body.appendChild(s);
+});
+
+const lines = [];
+const t = (n, ok, d) => lines.push(`${ok ? 'PASS' : 'FAIL'}  ${n}${d ? '  — ' + d : ''}`);
+
+function run() {
+  const mount = document.getElementById('mount');
+  const themeOf = () => mount.getAttribute('data-theme');
+  const click = (sel) => mount.querySelector(sel).click();
+  const modeOf = () => {
+    const b = [...mount.querySelectorAll('#od-theme-mode button')]
+      .find((x) => x.getAttribute('aria-checked') === 'true');
+    return b ? b.dataset.mode : null;
+  };
+  const menuOpen = () => !document.getElementById('od-theme-menu').hidden;
+
+  // --- defaults / upgrade ---
+  t('fresh install defaults to TokyoNight Day', themeOf() === 'tokyonight-day', themeOf());
+  t('fresh install defaults to Auto mode', modeOf() === 'auto', modeOf());
+  if (UPGRADE) {
+    click('#od-theme-mode button[data-mode="dark"]');
+    t(`stored \`${OLD}\` migrates to Naughty`, themeOf() === 'naughty', themeOf());
+    t('migration is written back', localStorage.getItem('o-dash-dark') === 'naughty',
+      String(localStorage.getItem('o-dash-dark')));
+    click('#od-theme-mode button[data-mode="auto"]');
+  }
+
+  // --- palette switching ---
+  click('#od-theme-mode button[data-mode="dark"]');
+  // A migrated profile must keep the palette it already had; only a fresh one
+  // gets the shipped default. Asserting the default in both arms would be
+  // asserting that migration does not work.
+  t(UPGRADE ? 'upgraded profile keeps Naughty' : 'dark mode defaults to the Stash palette',
+    themeOf() === (UPGRADE ? 'naughty' : 'stash'), themeOf());
+  if (UPGRADE) click('#od-theme-dark button[data-dark="stash"]');
+  t('dark picker shown, light picker hidden',
+    !document.getElementById('od-theme-dark').hidden
+    && document.getElementById('od-theme-light').hidden);
+
+  click('#od-theme-dark button[data-dark="naughty"]');
+  t('switching to the Naughty palette works', themeOf() === 'naughty', themeOf());
+  t('picking a dark palette does NOT change the mode', modeOf() === 'dark', modeOf());
+
+  click('#od-theme-dark button[data-dark="stash"]');
+  t('switching back to Stash works', themeOf() === 'stash', themeOf());
+  t('still in dark mode after a second palette pick', modeOf() === 'dark', modeOf());
+
+  click('#od-theme-mode button[data-mode="light"]');
+  t('light preference untouched by dark palette changes',
+    themeOf() === 'tokyonight-day', themeOf());
+  click('#od-theme-light button[data-light="spicy-pumpkin"]');
+  t('Spicy Pumpkin selectable', themeOf() === 'spicy-pumpkin', themeOf());
+  click('#od-theme-light button[data-light="aubade"]');
+  t('light palette still switchable', themeOf() === 'aubade', themeOf());
+  t('picking a light palette does NOT change the mode', modeOf() === 'light', modeOf());
+
+  click('#od-theme-mode button[data-mode="dark"]');
+  t('dark choice persisted across a mode round-trip', themeOf() === 'stash', themeOf());
+
+  // --- the disclosure control ---
+  const modeBefore = modeOf();
+  const openBefore = menuOpen();
+  document.getElementById('od-theme-btn').click();
+  t('tapping the theme button toggles the menu', menuOpen() !== openBefore);
+  t('tapping the theme button does NOT change the mode',
+    modeOf() === modeBefore, `${modeBefore} -> ${modeOf()}`);
+  t('tapping the theme button does NOT change the palette',
+    themeOf() === 'stash', themeOf());
+
+  // --- the keyboard shortcut still cycles ---
+  const before = modeOf();
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 't', bubbles: true }));
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 't', bubbles: true }));
+  t('t still cycles the mode', modeOf() !== before, `${before} -> ${modeOf()}`);
+
+  // --- every palette resolves ---
+  const probe = document.createElement('div');
+  probe.className = 'od-viz-root';
+  document.body.appendChild(probe);
+  for (const name of ['aubade', 'tokyonight-day', 'spicy-pumpkin', 'stash', 'naughty']) {
+    if (name === 'aubade') probe.removeAttribute('data-theme');
+    else probe.setAttribute('data-theme', name);
+    const cs = getComputedStyle(probe);
+    const missing = ['--surface-1', '--text-primary', '--series-1', '--ramp-0', '--ramp-4']
+      .filter((v) => !cs.getPropertyValue(v).trim());
+    t(`palette ${name} defines its variables`, missing.length === 0, missing.join(', '));
+  }
+  probe.remove();
+
+  // --- persistence ---
+  t('dark choice written to storage', localStorage.getItem('o-dash-dark') === 'stash',
+    String(localStorage.getItem('o-dash-dark')));
+  t('light choice written to storage', localStorage.getItem('o-dash-light') === 'aubade',
+    String(localStorage.getItem('o-dash-light')));
+
+  const failed = lines.filter((l) => l.startsWith('FAIL')).length;
+  lines.push('', failed ? `THEME CHECK: FAIL (${failed})` : 'THEME CHECK: PASS');
+  document.getElementById('out').textContent = lines.join('\n');
+}
+</script>
+</body>
+</html>

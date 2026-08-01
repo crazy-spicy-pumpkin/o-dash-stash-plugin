@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>style check</title>
+<link rel="stylesheet" href="/src/styles.css">
+<style>
+  #report { font: 12px/1.6 ui-monospace, Menlo, monospace; white-space: pre; }
+</style>
+</head>
+<body>
+<!--
+  Does the stylesheet actually reach the rendered marks?
+
+  The structural DOM diff used to verify the od- rename compares element trees,
+  and a class name that no rule matches any more produces an identical tree. It
+  is invisible there and invisible to a console check. It shipped once: the SVG
+  charts set their classes through svgEl({class: 'bar'}), a form the mechanical
+  rename never inspected, so every chart silently lost its styling while every
+  automated check stayed green.
+
+  Two assertions, both cheap:
+    1. every class inside the mount is od- prefixed  — catches the next miss
+    2. the marks have non-default computed styles    — catches a dead rule
+-->
+<div class="od-viz-root" id="mount"></div>
+<pre id="report"></pre>
+
+<script src="/src/graphql-source.js"></script>
+<script>
+fetch('/src/index.html')
+  .then((r) => r.text())
+  .then((html) => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    for (const s of doc.body.querySelectorAll('script')) s.remove();
+    const mount = document.getElementById('mount');
+    mount.innerHTML = doc.body.innerHTML;
+    const s = document.createElement('script');
+    s.src = '/src/app.js';
+    s.onload = () => setTimeout(run, 1500);
+    document.body.appendChild(s);
+  });
+
+const out = [];
+function check(name, ok, detail) {
+  out.push(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  — ' + detail : ''}`);
+  return ok;
+}
+
+function run() {
+  const mount = document.getElementById('mount');
+
+  // 1. No unprefixed classes anywhere in the rendered tree.
+  const stray = new Set();
+  for (const el of mount.querySelectorAll('*')) {
+    const cls = typeof el.className === 'string' ? el.className : el.className.baseVal || '';
+    for (const c of cls.split(/\s+/)) {
+      if (c && !c.startsWith('od-')) stray.add(c);
+    }
+  }
+  check('every class in the rendered tree is od- prefixed', stray.size === 0,
+    stray.size ? [...stray].sort().join(', ') : '');
+
+  // 2. The marks are actually styled. A class the stylesheet no longer matches
+  //    leaves SVG defaults: fill black, no stroke.
+  const marks = [
+    ['.od-bar', 'fill'],
+    ['.od-cell', 'fill'],
+    ['.od-spark-line', 'stroke'],
+    ['.od-tick-text', 'fill'],
+    ['.od-band-wash', 'fill'],
+  ];
+  for (const [sel, prop] of marks) {
+    const el = mount.querySelector(sel);
+    if (!el) { check(`${sel} exists`, false, 'not rendered'); continue; }
+    const v = getComputedStyle(el)[prop];
+    const styled = v && v !== 'none' && v !== 'rgb(0, 0, 0)';
+    check(`${sel} has a styled ${prop}`, styled, v);
+  }
+
+  // 3. The chart has real geometry, so a pass above cannot come from an
+  //    empty chart with nothing to style.
+  const svg = mount.querySelector('#od-main-chart svg');
+  check('main chart drew marks', !!svg && svg.querySelectorAll('path, rect').length > 3,
+    svg ? `${svg.querySelectorAll('path, rect').length} marks` : 'no svg');
+
+  const failed = out.filter((l) => l.startsWith('FAIL')).length;
+  out.push('', failed ? `STYLE CHECK: FAIL (${failed})` : 'STYLE CHECK: PASS');
+  document.getElementById('report').textContent = out.join('\n');
+}
+</script>
+</body>
+</html>

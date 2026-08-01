@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>O Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="od-viz-root">
+  <header class="od-topbar">
+    <div class="od-topbar-title">
+      <h1>
+        <!-- The mark was 💦. Colour emoji are bitmap/COLR glyphs and ignore
+             `color`, so no palette could reach it — it stayed the same blue on
+             every theme, including the orange one. Redrawn as an inline SVG in
+             the series colour, so it wears the accent like every other mark. -->
+        <svg class="od-title-mark" viewBox="0 0 24 24" aria-hidden="true">
+          <!-- Three droplets, measured off the emoji rather than eyeballed. For
+               each: bulb centre, bulb radius and tip were read off a reference
+               render, the rotation derived from the centre->tip vector, and the
+               whole thing fitted to the box preserving aspect.
+
+               Two things that were wrong when drawn by eye:
+                 - all three lean the SAME way, tails up-left (-71, -16, -28).
+                   An earlier pass had the small one at +32, tail up-right.
+                 - the tails are long: the tip sits ~2.4x the bulb radius from
+                   its centre. At 1.7x they read as teardrops, not droplets.
+
+               One path placed three times, so the three cannot drift apart. -->
+          <path transform="translate(18.1 6.7) rotate(-71) scale(0.971)"
+                d="M0-12C2.7-7 5-3.3 5 0a5 5 0 0 1-10 0C-5-3.3-2.7-7 0-12z"/>
+          <path transform="translate(4.9 15.8) rotate(-16) scale(0.780)"
+                d="M0-12C2.7-7 5-3.3 5 0a5 5 0 0 1-10 0C-5-3.3-2.7-7 0-12z"/>
+          <path transform="translate(16.1 18.8) rotate(-28) scale(0.661)"
+                d="M0-12C2.7-7 5-3.3 5 0a5 5 0 0 1-10 0C-5-3.3-2.7-7 0-12z"/>
+        </svg>
+        O Dashboard
+      </h1>
+      <p class="od-source" id="od-source-line">reading Stash…</p>
+    </div>
+    <div class="od-topbar-actions">
+      <div class="od-theme-switcher">
+        <button class="od-btn" id="od-theme-btn" type="button" aria-haspopup="true" aria-expanded="false"
+                title="Theme (t cycles mode)">
+          <span class="od-theme-dot" aria-hidden="true"></span><span id="od-theme-btn-label">Auto</span>
+        </button>
+        <div class="od-theme-menu" id="od-theme-menu" role="dialog" aria-label="Theme" hidden>
+          <p class="od-menu-label" id="od-mode-label">Mode</p>
+          <div class="od-segmented od-small" id="od-theme-mode" role="radiogroup" aria-labelledby="od-mode-label">
+            <button role="radio" type="button" data-mode="auto" aria-checked="true">Auto</button>
+            <button role="radio" type="button" data-mode="light" aria-checked="false">Light</button>
+            <button role="radio" type="button" data-mode="dark" aria-checked="false">Dark</button>
+          </div>
+          <p class="od-menu-label" id="od-palette-label">Light palette</p>
+          <div class="od-theme-choices" id="od-theme-light" role="radiogroup" aria-labelledby="od-palette-label">
+            <button role="radio" type="button" data-light="aubade" aria-checked="false">
+              <span class="od-swatch-row" aria-hidden="true">
+                <i style="background:#fbf6fb"></i><i style="background:#e996c4"></i>
+                <i style="background:#ae3f84"></i><i style="background:#660048"></i>
+              </span>
+              <span>Aubade</span>
+            </button>
+            <button role="radio" type="button" data-light="tokyonight-day" aria-checked="true">
+              <span class="od-swatch-row" aria-hidden="true">
+                <i style="background:#eaebf0"></i><i style="background:#79a9f0"></i>
+                <i style="background:#2e7de9"></i><i style="background:#013575"></i>
+              </span>
+              <span>TokyoNight Day</span>
+            </button>
+            <button role="radio" type="button" data-light="spicy-pumpkin" aria-checked="false">
+              <span class="od-swatch-row" aria-hidden="true">
+                <i style="background:#fdf7f0"></i><i style="background:#f19d74"></i>
+                <i style="background:#d2601a"></i><i style="background:#5e2400"></i>
+              </span>
+              <span>Spicy Pumpkin</span>
+            </button>
+          </div>
+          <div class="od-theme-choices" id="od-theme-dark" role="radiogroup" aria-labelledby="od-palette-label" hidden>
+            <button role="radio" type="button" data-dark="stash" aria-checked="true" class="od-is-active">
+              <span class="od-swatch-row" aria-hidden="true">
+                <i style="background:#30404d"></i><i style="background:#0072b0"></i>
+                <i style="background:#48aff0"></i><i style="background:#bbdefb"></i>
+              </span>
+              <span>Stash</span>
+            </button>
+            <button role="radio" type="button" data-dark="naughty" aria-checked="false">
+              <span class="od-swatch-row" aria-hidden="true">
+                <i style="background:#1a1a19"></i><i style="background:#184f95"></i>
+                <i style="background:#3987e5"></i><i style="background:#b7d3f6"></i>
+              </span>
+              <span>Naughty</span>
+            </button>
+          </div>
+          <p class="od-menu-note" id="od-theme-note"></p>
+        </div>
+      </div>
+      <button class="od-btn" id="od-refresh-btn" type="button" title="Re-query Stash now (r)">
+        <span class="od-spinner" aria-hidden="true"></span><span id="od-refresh-label">Refresh</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="od-controls" role="group" aria-label="Time range">
+    <div class="od-segmented" id="od-granularity" role="tablist" aria-label="Granularity">
+      <button role="tab" type="button" data-gran="week" aria-selected="true">Week</button>
+      <button role="tab" type="button" data-gran="month" aria-selected="false">Month</button>
+      <button role="tab" type="button" data-gran="year" aria-selected="false">Year</button>
+    </div>
+    <div class="od-period-nav">
+      <button class="od-btn od-icon" id="od-prev-btn" type="button" aria-label="Previous period">‹</button>
+      <span class="od-period-label" id="od-period-label" aria-live="polite">—</span>
+      <button class="od-btn od-icon" id="od-next-btn" type="button" aria-label="Next period">›</button>
+    </div>
+    <button class="od-btn" id="od-today-btn" type="button">Today</button>
+  </div>
+
+  <main id="od-main">
+    <section class="od-grid-hero">
+      <article class="od-card od-hero-card">
+        <p class="od-label" id="od-hero-label">This week</p>
+        <p class="od-hero-value" id="od-hero-value">—</p>
+        <p class="od-delta" id="od-hero-delta"></p>
+        <div class="od-sparkline" id="od-hero-spark" aria-hidden="true"></div>
+        <p class="od-caption" id="od-hero-spark-caption"></p>
+      </article>
+      <div class="od-tiles" id="od-tiles"></div>
+    </section>
+
+    <article class="od-card">
+      <div class="od-card-head">
+        <div>
+          <h2 id="od-main-chart-title">Daily O count</h2>
+          <p class="od-caption" id="od-main-chart-caption"></p>
+        </div>
+      </div>
+      <div class="od-chart" id="od-main-chart"></div>
+      <details class="od-table-view">
+        <summary>Data table</summary>
+        <div id="od-main-chart-table"></div>
+      </details>
+    </article>
+
+    <article class="od-card">
+      <div class="od-card-head">
+        <div>
+          <h2 id="od-heatmap-title">Calendar</h2>
+          <p class="od-caption">Every day of the year. Click a day to jump to its week.</p>
+        </div>
+        <div class="od-scale-legend" id="od-heatmap-legend"></div>
+      </div>
+      <div class="od-chart od-heatmap-wrap" id="od-heatmap"></div>
+      <details class="od-table-view">
+        <summary>Data table</summary>
+        <div id="od-heatmap-table"></div>
+      </details>
+    </article>
+
+    <section class="od-section">
+      <div class="od-section-head">
+        <h2>Patterns</h2>
+        <div class="od-segmented od-small" id="od-scope" role="tablist" aria-label="Scope for the panels below">
+          <button role="tab" type="button" data-scope="period" aria-selected="true">This period</button>
+          <button role="tab" type="button" data-scope="all" aria-selected="false">All time</button>
+        </div>
+      </div>
+      <p class="od-caption od-section-caption" id="od-scope-caption"></p>
+
+      <div class="od-grid-two">
+        <article class="od-card">
+          <h3>Time of day</h3>
+          <p class="od-caption">Local time, by hour started.</p>
+          <div class="od-chart" id="od-hour-chart"></div>
+          <details class="od-table-view">
+            <summary>Data table</summary>
+            <div id="od-hour-table"></div>
+          </details>
+        </article>
+        <article class="od-card">
+          <h3>Day of week</h3>
+          <p class="od-caption">Monday first.</p>
+          <div class="od-chart" id="od-dow-chart"></div>
+          <details class="od-table-view">
+            <summary>Data table</summary>
+            <div id="od-dow-table"></div>
+          </details>
+        </article>
+      </div>
+
+      <div class="od-grid-three">
+        <article class="od-card">
+          <h3>Top scenes</h3>
+          <div id="od-top-scenes" class="od-ranked"></div>
+        </article>
+        <article class="od-card">
+          <h3>Top performers</h3>
+          <div id="od-top-performers" class="od-ranked"></div>
+        </article>
+        <article class="od-card">
+          <h3>Top tags</h3>
+          <div id="od-top-tags" class="od-ranked"></div>
+        </article>
+      </div>
+    </section>
+
+    <article class="od-card">
+      <h2>All time</h2>
+      <div class="od-facts" id="od-facts"></div>
+    </article>
+  </main>
+
+  <footer class="od-footer">
+    <p id="od-footer-line"></p>
+    <p class="od-caption">Keys: ← → period · W M Y granularity · R refresh · T theme</p>
+  </footer>
+
+  <div class="od-tooltip" id="od-tooltip" role="status" aria-live="polite"></div>
+  <!-- graphql-source.js must come first: app.js calls load() as it is parsed,
+       so a source installed afterwards would miss the first load. Phase 2
+       replaces this shell with a fragment mounted into the Stash UI; the two
+       scripts stay as they are. -->
+  <script src="demo-source.js"></script>
+  <script src="graphql-source.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

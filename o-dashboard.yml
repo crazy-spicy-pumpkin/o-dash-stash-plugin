@@ -1,0 +1,24 @@
+name: O Dashboard
+description: A dashboard over your Stash O-count history — daily counts, a calendar, time-of-day and day-of-week patterns, and ranked scenes, performers and tags.
+version: 0.1.0
+
+# No exec / interface / tasks / hooks: this is a UI-only plugin. Nothing runs
+# server-side, and there is no write path to Stash.
+ui:
+  # Order matters. graphql-source.js installs itself before app.js runs, because
+  # app.js starts its first load as it is parsed; plugin.js needs both in place.
+  javascript:
+    - src/demo-source.js
+    - src/graphql-source.js
+    - src/app.js
+    - src/plugin.js
+  css:
+    - src/styles.css
+  # index.html is fetched at mount time for the shell markup, so it has to be
+  # reachable as an asset. Served at /plugin/o-dashboard/assets/...
+  assets:
+    /: .
+  # No csp entry is needed, and that is a point in this design's favour: the
+  # GraphQL call is same-origin, and Stash's own policy already allows
+  # 'unsafe-inline' styles, which the six inline style attributes in the shell
+  # rely on.

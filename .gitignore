@@ -1,0 +1,36 @@
+# Machine-specific values — never commit. If this project ever needs a real
+# Stash URL or path, this is the only place it belongs.
+config.local.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS
+.DS_Store
+
+# Anything captured from a real library (screenshots, exports, snapshots) is
+# personal data. Keep it out of the repo. The only images that may ever be
+# committed are captures of demo mode, which reads no library at all —
+# docs/themes.gif is one, produced by tools/capture.html, which refuses to run
+# without demo=1.
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+screenshots/
+*.png
+*.jpg
+
+# GraphQL responses are library data in bulk — the plugin's equivalent of the
+# database itself. Never commit a captured payload; fixtures come from demo
+# mode only.
+*.payload.json
+fixtures/real/
+
+# The generated diagrams are the committed artifact, not build output — they
+# contain no library data and are what renders on GitHub.
+!docs/*.svg
+!docs/*.excalidraw
+dist/
