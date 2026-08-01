@@ -44,8 +44,10 @@ an explicit offset and it is honoured rather than sliced off, so an event at
 2. Name it anything; point the URL at an `index.yml` (see Packaging below)
 3. Tick **O Dashboard** → **Install**
 
-**By hand:** unzip a release into your Stash config's `plugins/` directory, or
-build one with `sh tools/package.sh`, then Settings → Plugins → Reload plugins.
+**By hand:** build the zip with `sh tools/package.sh` and unzip it into a
+`plugins/o-dashboard/` directory inside your Stash config — the archive holds the
+manifest and `src/` at its top level, with no wrapping folder, which is the
+layout Stash's own installer produces. Then Settings → Plugins → Reload plugins.
 
 Either way the dashboard appears in the nav bar and at `/o-dashboard`.
 

@@ -32,9 +32,14 @@ cp "$REPO/$ID.yml" "$STAGE/"
 cp "$REPO/src/app.js" "$REPO/src/graphql-source.js" "$REPO/src/demo-source.js" \
    "$REPO/src/plugin.js" "$REPO/src/styles.css" "$REPO/src/index.html" "$STAGE/src/"
 
-# Zip with the plugin id as the top-level directory, which is what the
-# installer expects to unpack into plugins/.
-(cd "$OUT/.stage" && zip -qr "$OUT/$ID.zip" "$ID")
+# Zip the plugin's *contents*, with no wrapping directory. Stash unpacks a
+# package into plugins/<id>/ itself, so a wrapper here lands the files at
+# plugins/<id>/<id>/ and the plugin does not load. Verified by installing from
+# a served index, not by reading the docs.
+# zip appends to an existing archive, so a rebuild would otherwise carry every
+# previous layout along with the current one.
+rm -f "$OUT/$ID.zip"
+(cd "$STAGE" && zip -qr "$OUT/$ID.zip" .)
 rm -rf "$OUT/.stage"
 
 SHA=$(shasum -a 256 "$OUT/$ID.zip" | cut -d' ' -f1)
