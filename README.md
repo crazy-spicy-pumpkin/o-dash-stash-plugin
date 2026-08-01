@@ -41,13 +41,27 @@ an explicit offset and it is honoured rather than sliced off, so an event at
 **From a plugin source** — nothing to unzip:
 
 1. Settings → Plugins → **Available Plugins** → **Add Source**
-2. Name it anything; point the URL at an `index.yml` (see Packaging below)
-3. Tick **O Dashboard** → **Install**
+2. Fill in:
 
-**By hand:** build the zip with `sh tools/package.sh` and unzip it into a
+   | Field | Value |
+   |---|---|
+   | Name | `Spicy Pumpkin` — this names the *source*, not the plugin |
+   | URL | `https://crazy-spicy-pumpkin.github.io/o-dash-stash-plugin/index.yml` |
+   | Local Path | `o-dashboard` — the folder under `plugins/` this source installs into |
+
+3. Expand the new source, tick **O Dashboard**, and click **Install**
+
+It then appears under **Installed Plugins**, where **Check for updates** and
+**Update** will pick up new releases.
+
+**By hand** (only if you would rather not add a source): build the zip with
+`sh tools/package.sh` and unzip it into a
 `plugins/o-dashboard/` directory inside your Stash config — the archive holds the
-manifest and `src/` at its top level, with no wrapping folder, which is the
-layout Stash's own installer produces. Then Settings → Plugins → Reload plugins.
+manifest and `src/` at its top level, with no wrapping folder. Then Settings →
+Plugins → Reload plugins.
+
+Do not do both. A hand-copy and a package install can end up side by side with
+the same plugin id, and Stash will load one of them unpredictably.
 
 Either way the dashboard appears in the nav bar and at `/o-dashboard`.
 
@@ -163,13 +177,18 @@ tests, in about half a minute.
 
 | File | What it is |
 |---|---|
-| `o-dashboard.zip` | the plugin — `o-dashboard.yml` plus `src/`, with the plugin id as the top-level directory, which is what Stash's installer expects |
+| `o-dashboard.zip` | the plugin — `o-dashboard.yml` and `src/` at the archive's top level, with no wrapping directory, because Stash unpacks into `plugins/<local_path>/<id>/` itself |
 | `index.yml` | the package index a *plugin source* serves: id, name, version, date, path to the zip, and its sha256 |
 
-Serve that directory over any static HTTP host — GitHub Pages, a release
-asset, a LAN box — and the `index.yml` URL is what people paste into **Add
-Source**. Stash fetches the index, shows the entry under Available Plugins, and
-downloads the zip on install.
+`.github/workflows/publish.yml` does this on every push to `main`: it builds
+both files and serves them from GitHub Pages, which is where the URL above comes
+from. Before publishing it checks that the sha256 in the index matches the zip,
+and that the manifest sits at the archive's top level — a wrapping directory
+would install the plugin one level too deep and it would not load.
+
+To publish your own fork, enable Pages (Settings → Pages → Source: **GitHub
+Actions**) and push. Or serve `dist/` from any static host; only the URL
+changes.
 
 The version comes from `o-dashboard.yml`; bump it there and re-run, or Stash
 will not offer an update. The sha256 is recomputed each build, so a zip that
