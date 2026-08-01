@@ -30,8 +30,8 @@ cp "$REPO/o-dashboard.yml" "$DEST/"
 cp "$REPO/src/app.js" "$REPO/src/graphql-source.js" "$REPO/src/demo-source.js" \
    "$REPO/src/plugin.js" "$REPO/src/styles.css" "$REPO/src/index.html" "$DEST/src/"
 
-# Deliberately not copied: tools/ (dev harness), CLAUDE.md, .git.
-# The plugin is the manifest plus src/, and nothing else.
+# Deliberately not copied: tools/ (dev harness), docs/, .git — the plugin is
+# the manifest plus src/, and nothing else.
 
 echo "installed: o-dashboard.yml + src/ (6 files)"
 echo "next: Settings -> Plugins -> Reload plugins, then enable \"O Dashboard\""
