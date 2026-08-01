@@ -1,6 +1,8 @@
 name: O Dashboard
 description: A dashboard over your Stash O-count history — daily counts, a calendar, time-of-day and day-of-week patterns, and ranked scenes, performers and tags.
 version: 0.1.0
+# Shown in Stash's plugin list, and where an update or an issue would go.
+url: https://github.com/crazy-spicy-pumpkin/o-dash-stash-plugin
 
 # No exec / interface / tasks / hooks: this is a UI-only plugin. Nothing runs
 # server-side, and there is no write path to Stash.
