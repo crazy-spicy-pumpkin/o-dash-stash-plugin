@@ -198,6 +198,7 @@ Four steps. **You do the first two; the last two happen on their own.** Taking
 
 ```sh
 sh tools/bump.sh patch          # o-dashboard.yml: version: 0.1.0 -> 0.1.1
+$EDITOR CHANGELOG.md            # add a "## 0.1.1" section
 git commit -am "Fix the thing"
 ```
 
@@ -210,6 +211,9 @@ git commit -am "Fix the thing"
   changed while the version stood still.** It does not bump for you — it stops
   you. What counts as shipped is listed once, in `tools/shipped.sh`, which
   `package.sh` reads too so the two can't drift.
+- Release notes live in `CHANGELOG.md`, one `##` section per version. Write
+  them now, while the change is in front of you — `release.sh` refuses to
+  release a version that has no section.
 
 **2 · Cut the release** — *manual*
 
@@ -220,8 +224,23 @@ sh tools/release.sh             # reads 0.1.1, tags v0.1.1, pushes
 - Nothing triggers this but you. It reads `0.1.1` out of the manifest and names
   the tag after it — so the manifest doesn't *cause* the tag, it *names* it.
 - It refuses a dirty tree, a branch other than `main`, a tag that already
-  exists, and failing checks. Re-tagging is the one mistake with no clean
-  recovery, so it would rather stop.
+  exists, missing release notes, and failing checks. Re-tagging is the one
+  mistake with no clean recovery, so it would rather stop.
+- The `0.1.1` section of `CHANGELOG.md` becomes the tag's annotation, so the
+  notes travel with the tag rather than living only on a web page.
+
+The **GitHub Release page** is a separate, optional step, and `release.sh`
+prints the command rather than running it — `gh` authenticates separately from
+git, so a working push says nothing about whether it will succeed:
+
+```sh
+sh tools/notes.sh 0.1.1 > /tmp/notes.md
+gh release create v0.1.1 dist/o-dashboard.zip \
+    --title "O Dashboard 0.1.1" --notes-file /tmp/notes.md
+```
+
+Installing does not depend on it — Stash installs from the package source, not
+from a Release asset.
 
 **3 · The tag fires CI** — *automatic*
 
@@ -315,6 +334,9 @@ Two things worth knowing about that loop:
 Other commands:
 
     sh tools/package.sh                # build the zip + index.yml
+    sh tools/bump.sh patch             # move the version forward one step
+    sh tools/notes.sh 0.1.0            # print that version's CHANGELOG section
+    sh tools/release.sh                # tag the current version and publish it
     python3 docs/diagrams.py           # regenerate the diagrams from their spec
 
 ## Checks
@@ -331,7 +353,8 @@ It starts its own dev server on a spare port and stops it again. What it covers:
 | `tools/theme-check.html` | palette defaults, switching and persistence |
 | `tools/leak-check.sh` | CSS containment in both directions, measured differentially against Stash's own stylesheet |
 | demo mode | renders, and says plainly that no library was read |
-| packaging | the zip builds and its index carries a sha256 |
+| `tools/version-check.sh` | a shipped file did not change while the version stood still |
+| packaging | the zip builds, its index carries a sha256, and the archive holds exactly the files listed in `tools/shipped.sh` |
 
 `tools/measure.sh` reports query timings separately; it is a measurement, not a
 pass/fail check. Arms needing Stash skip cleanly when it is not running.

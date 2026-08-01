@@ -46,6 +46,15 @@ if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
   exit 1
 fi
 
+# Notes come from CHANGELOG.md so the tag, the GitHub Release and the repo all
+# say the same thing. A missing section stops the release rather than producing
+# an empty one: the moment to describe a change is while cutting it, not weeks
+# later from the commit log.
+NOTES=$(sh tools/notes.sh "$VERSION") || {
+  echo "write the notes first — add a '## $VERSION' section to CHANGELOG.md" >&2
+  exit 1
+}
+
 if [ "${SKIP_CHECKS:-0}" = "1" ]; then
   echo "skipping checks at your request"
 else
@@ -57,9 +66,17 @@ fi
 # Push the commits before the tag. A tag that arrives first points at a commit
 # the remote does not have yet, and the workflow checks out nothing.
 git push origin "$branch"
-git tag -a "$TAG" -m "O Dashboard $VERSION"
+printf 'O Dashboard %s\n\n%s\n' "$VERSION" "$NOTES" | git tag -a "$TAG" -F -
 git push origin "$TAG"
 
 echo
 echo "released $TAG — the publish workflow builds and deploys from the tag."
 echo "watch it:  gh run watch"
+echo
+# gh authenticates separately from git, so a working push says nothing about
+# whether this will succeed. Printed rather than run for that reason.
+echo "to add the GitHub Release page, with the notes already written:"
+echo "    sh tools/package.sh"
+echo "    sh tools/notes.sh $VERSION > /tmp/notes.md"
+echo "    gh release create $TAG dist/o-dashboard.zip \\"
+echo "        --title \"O Dashboard $VERSION\" --notes-file /tmp/notes.md"
