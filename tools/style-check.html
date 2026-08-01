@@ -26,7 +26,14 @@
 <div class="od-viz-root" id="mount"></div>
 <pre id="report"></pre>
 
-<script src="/src/graphql-source.js"></script>
+<script>
+  // Demo data, deliberately. This check is about whether the marks are styled,
+  // so depending on a live Stash would make it fail for reasons that have
+  // nothing to do with styling — an unreachable server, or an authenticated
+  // one this harness has no session for.
+  window.OD_DEMO = true;
+</script>
+<script src="/src/demo-source.js"></script>
 <script>
 fetch('/src/index.html')
   .then((r) => r.text())
