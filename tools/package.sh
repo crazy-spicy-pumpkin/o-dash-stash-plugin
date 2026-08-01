@@ -28,6 +28,11 @@ VERSION=$(sed -n 's/^version: *//p' "$REPO/$ID.yml" | head -1)
 rm -rf "$OUT/.stage"
 mkdir -p "$STAGE/src" "$OUT"
 
+# Resolve to an absolute path: the zip is created from inside the staging
+# directory, so a relative outdir would land the archive under it.
+OUT=$(cd "$OUT" && pwd)
+STAGE="$OUT/.stage/$ID"
+
 cp "$REPO/$ID.yml" "$STAGE/"
 cp "$REPO/src/app.js" "$REPO/src/graphql-source.js" "$REPO/src/demo-source.js" \
    "$REPO/src/plugin.js" "$REPO/src/styles.css" "$REPO/src/index.html" "$STAGE/src/"

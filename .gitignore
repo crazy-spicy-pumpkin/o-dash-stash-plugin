@@ -34,6 +34,7 @@ fixtures/real/
 !docs/*.svg
 !docs/*.excalidraw
 dist/
+_site/
 
 # Agent working rules — local, not published.
 CLAUDE.md

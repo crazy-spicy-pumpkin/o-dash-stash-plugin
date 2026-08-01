@@ -1,0 +1,64 @@
+# Publishes the plugin as a Stash package source.
+#
+# ROLE. Turns a push into a one-click install: builds the zip and the index
+# that Stash's package manager reads, and serves them from GitHub Pages. The
+# resulting index URL is what someone pastes into Settings → Plugins →
+# Available Plugins → Add Source.
+#
+# Nothing here is committed — dist/ stays a build artifact. The published site
+# is rebuilt from source on every push, so the sha256 in the index always
+# matches the zip beside it.
+
+name: Publish plugin source
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:      # so a republish never requires an empty commit
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One publish at a time. A queued run is allowed to finish rather than being
+# cancelled, so the live index is never left pointing at a half-built site.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the package and its index
+        run: sh tools/package.sh _site
+
+      - name: Check the index and the zip agree
+        # The index carries a sha256 of the zip. If they ever disagree, Stash
+        # refuses the install with an integrity error that is hard to read, so
+        # catch it here where the message can say what happened.
+        run: |
+          indexed=$(grep '^  sha256:' _site/index.yml | awk '{print $2}')
+          actual=$(sha256sum _site/o-dashboard.zip | cut -d' ' -f1)
+          echo "indexed: $indexed"
+          echo "actual:  $actual"
+          [ "$indexed" = "$actual" ] || { echo "index does not match the zip"; exit 1; }
+          unzip -l _site/o-dashboard.zip | grep -q ' o-dashboard.yml$' \
+            || { echo "manifest is not at the top level of the zip"; exit 1; }
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
