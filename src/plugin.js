@@ -38,6 +38,10 @@
      fallback so this keeps working if Stash ever fixes the redirect. */
   const SHELL_URLS = [`${ASSETS}/src/`, `${ASSETS}/src/index.html`];
 
+  /** Proves the response really is the shell and not something served in its
+      place. Any id the shell is guaranteed to contain would do. */
+  const SHELL_MARKER = 'od-main';
+
   /** Gets the dashboard's markup from the files Stash is serving. */
   async function fetchShell() {
     let lastError;
@@ -52,7 +56,17 @@
         // on disk and absent from the page — a theme missing from the picker
         // was the first symptom.
         const res = await fetch(url, { cache: 'no-cache' });
-        if (res.ok) return res.text();
+        if (res.ok) {
+          const markup = await res.text();
+          // A 200 is not proof we got the shell. With authentication enabled,
+          // an expired session turns this into a redirect to the login page,
+          // which fetch follows and reports as a perfectly good 200. Injecting
+          // that would put Stash's login form inside the dashboard's own div
+          // and then mount against markup that has none of its ids.
+          if (markup.includes(SHELL_MARKER)) return markup;
+          lastError = new Error('not signed in to Stash — sign in and reload');
+          continue;
+        }
         lastError = new Error(`shell HTTP ${res.status}`);
       } catch (err) {
         lastError = err;
