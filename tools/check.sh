@@ -112,6 +112,17 @@ case "$dom" in
   *) fail "demo caption missing" ;;
 esac
 
+# --- version --------------------------------------------------------------
+# Runs against the working tree, so it judges the commit about to be made.
+echo
+echo "version"
+if out=$(sh "$REPO/tools/version-check.sh" 2>&1); then
+  pass "$(echo "$out" | head -1)"
+else
+  fail "shipped files changed without a version bump"
+  echo "$out" | sed 's/^/        /'
+fi
+
 # --- packaging ------------------------------------------------------------
 echo
 echo "packaging"
@@ -121,6 +132,18 @@ if sh "$REPO/tools/package.sh" >/dev/null 2>&1; then
     pass "index.yml carries a sha256"
   else
     fail "index.yml sha256 malformed"
+  fi
+  # Exiting zero says nothing about what landed inside. A file dropped from the
+  # archive still builds, still publishes, and only shows up as a plugin that
+  # will not load.
+  . "$REPO/tools/shipped.sh"
+  inside=$(unzip -Z1 "$REPO/dist/o-dashboard.zip" | grep -v '/$' | sort)
+  expected=$(shipped_files | sort)
+  if [ "$inside" = "$expected" ]; then
+    pass "archive holds exactly the shipped files"
+  else
+    fail "archive contents differ from shipped.sh"
+    printf 'expected:\n%s\ninside:\n%s\n' "$expected" "$inside" | sed 's/^/        /'
   fi
 else
   fail "package build"

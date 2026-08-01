@@ -34,6 +34,15 @@ charts bucket. The worked example is the case worth knowing: timestamps carry
 an explicit offset and it is honoured rather than sliced off, so an event at
 22:15+05:30 sorts before one at 23:45Z.
 
+![Release flow](docs/release.svg)
+
+Getting a change into someone else's Stash takes four steps: you bump the
+version and cut the release, then CI publishes and Stash offers the update. It
+is the one path with no feedback when you get it wrong — Stash decides an update
+exists by comparing version *strings*, not contents, so shipping a fix without
+bumping reaches nobody and says nothing. Hence a guard on your machine and
+another in CI, and only a `v*` tag publishes. See [Releasing](#releasing).
+
 ![Diagram legend](docs/legend.svg)
 
 ## Install
@@ -180,19 +189,67 @@ tests, in about half a minute.
 | `o-dashboard.zip` | the plugin — `o-dashboard.yml` and `src/` at the archive's top level, with no wrapping directory, because Stash unpacks into `plugins/<local_path>/<id>/` itself |
 | `index.yml` | the package index a *plugin source* serves: id, name, version, date, path to the zip, and its sha256 |
 
-`.github/workflows/publish.yml` does this on every push to `main`: it builds
-both files and serves them from GitHub Pages, which is where the URL above comes
-from. Before publishing it checks that the sha256 in the index matches the zip,
-and that the manifest sits at the archive's top level — a wrapping directory
-would install the plugin one level too deep and it would not load.
+### Releasing
+
+Four steps. **You do the first two; the last two happen on their own.** Taking
+`0.1.0 → 0.1.1` as the worked example:
+
+**1 · Bump the manifest** — *manual*
+
+```sh
+sh tools/bump.sh patch          # o-dashboard.yml: version: 0.1.0 -> 0.1.1
+git commit -am "Fix the thing"
+```
+
+- The manifest is the **source of truth** for the version. Nothing watches it;
+  it is a value that gets *read* — by `package.sh` when building, and by
+  `release.sh` when naming the tag.
+- Committing publishes nothing. That commit can sit on `main` indefinitely and
+  no one's Stash will notice.
+- `tools/version-check.sh`, which `check.sh` runs, **fails if a shipped file
+  changed while the version stood still.** It does not bump for you — it stops
+  you. What counts as shipped is listed once, in `tools/shipped.sh`, which
+  `package.sh` reads too so the two can't drift.
+
+**2 · Cut the release** — *manual*
+
+```sh
+sh tools/release.sh             # reads 0.1.1, tags v0.1.1, pushes
+```
+
+- Nothing triggers this but you. It reads `0.1.1` out of the manifest and names
+  the tag after it — so the manifest doesn't *cause* the tag, it *names* it.
+- It refuses a dirty tree, a branch other than `main`, a tag that already
+  exists, and failing checks. Re-tagging is the one mistake with no clean
+  recovery, so it would rather stop.
+
+**3 · The tag fires CI** — *automatic*
+
+- `.github/workflows/publish.yml` listens on `push: tags: ['v*']`. **Pushing
+  the tag is the only automatic link in the chain.**
+- It checks the tag matches the manifest, builds the zip and index, checks the
+  index's sha256 matches the zip and that the manifest sits at the archive's
+  top level — a wrapping directory installs the plugin one level too deep and
+  it silently fails to load. Then it deploys to GitHub Pages.
+- Any one of those failing stops the publish, and the previous version stays
+  live.
+
+**4 · Stash offers the update** — *automatic*
+
+- The published `index.yml` now says `0.1.1`; someone's installed copy says
+  `0.1.0`. **Check for updates** compares the two *strings*, sees they differ,
+  and offers **Update**.
+- This is why the bump matters more than it looks: Stash compares versions, not
+  contents. Ship a fix without bumping and everyone who already installed keeps
+  the old copy, with no error anywhere to suggest otherwise.
+
+Why a tag rather than a push to `main`: a zip records modification times, so
+rebuilding *identical* sources still produces a different sha256. Publishing on
+every commit would change what people install every time the README was edited.
 
 To publish your own fork, enable Pages (Settings → Pages → Source: **GitHub
-Actions**) and push. Or serve `dist/` from any static host; only the URL
+Actions**) and push a tag. Or serve `dist/` from any static host; only the URL
 changes.
-
-The version comes from `o-dashboard.yml`; bump it there and re-run, or Stash
-will not offer an update. The sha256 is recomputed each build, so a zip that
-does not match its index is a build you forgot to re-run.
 
 Two things worth knowing:
 

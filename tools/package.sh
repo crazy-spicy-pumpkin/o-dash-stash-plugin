@@ -33,9 +33,11 @@ mkdir -p "$STAGE/src" "$OUT"
 OUT=$(cd "$OUT" && pwd)
 STAGE="$OUT/.stage/$ID"
 
-cp "$REPO/$ID.yml" "$STAGE/"
-cp "$REPO/src/app.js" "$REPO/src/graphql-source.js" "$REPO/src/demo-source.js" \
-   "$REPO/src/plugin.js" "$REPO/src/styles.css" "$REPO/src/index.html" "$STAGE/src/"
+# The list lives in shipped.sh because version-check.sh has to agree with it.
+. "$REPO/tools/shipped.sh"
+for f in $(shipped_files); do
+  cp "$REPO/$f" "$STAGE/$f"
+done
 
 # Zip the plugin's *contents*, with no wrapping directory. Stash unpacks a
 # package into plugins/<id>/ itself, so a wrapper here lands the files at

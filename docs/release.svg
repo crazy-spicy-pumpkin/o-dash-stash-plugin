@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 1002" width="940" height="1002" role="img" aria-label="Release — how a change reaches someone else's Stash">
+<rect width="940" height="1002" fill="#ffffff"/>
+<text x="470.0" y="30.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="24" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">Release — how a change reaches someone else’s Stash</text>
+<text x="470.0" y="57.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#757575" text-anchor="middle" font-weight="400" dominant-baseline="middle">steps 1 and 2 you do · steps 3 and 4 happen on their own</text>
+<text x="470.0" y="81.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#757575" text-anchor="middle" font-weight="400" dominant-baseline="middle">one worked example, carried through: 0.1.0 → 0.1.1</text>
+<text x="68.0" y="119.3" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#b45309" text-anchor="start" font-weight="400" dominant-baseline="middle">YOU — nothing is published until you say so</text>
+<rect x="50" y="132" width="840" height="146" rx="12" fill="#ffe8cc" fill-opacity="0.45" stroke="#f59e0b" stroke-width="1"/>
+<text x="68.0" y="149.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#b45309" text-anchor="start" font-weight="400" dominant-baseline="middle">1 · Bump the manifest</text>
+<rect x="80" y="168" width="330" height="46" rx="10" fill="#ffd8a8" fill-opacity="1" stroke="#f59e0b" stroke-width="2"/>
+<text x="245.0" y="192.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">sh tools/bump.sh patch</text>
+<line x1="410.0" y1="191.0" x2="442.0" y2="191.0" stroke="#f59e0b" stroke-width="2"/>
+<polygon points="452.0,191.0 442.0,195.5 442.0,186.5" fill="#f59e0b"/>
+<rect x="452" y="168" width="408" height="46" rx="10" fill="#ffd8a8" fill-opacity="1" stroke="#f59e0b" stroke-width="2"/>
+<text x="656.0" y="192.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">o-dashboard.yml · version: 0.1.0 → 0.1.1</text>
+<rect x="80" y="228" width="780" height="32" rx="10" fill="#fff3bf" fill-opacity="0.65" stroke="#f59e0b" stroke-width="1"/>
+<text x="470.0" y="245.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle" font-weight="400" dominant-baseline="middle">check.sh fails if a shipped file changed and the version did not</text>
+<line x1="470.0" y1="280.0" x2="470.0" y2="306.0" stroke="#f59e0b" stroke-width="2"/>
+<polygon points="470.0,316.0 465.5,306.0 474.5,306.0" fill="#f59e0b"/>
+<rect x="372.1" y="288.0" width="195.9" height="20" rx="4" fill="#ffffff"/>
+<text x="470.0" y="298.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#3f3f3f" text-anchor="middle" font-weight="400" dominant-baseline="middle">git commit — still private</text>
+<rect x="50" y="318" width="840" height="146" rx="12" fill="#ffe8cc" fill-opacity="0.45" stroke="#f59e0b" stroke-width="1"/>
+<text x="68.0" y="335.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#b45309" text-anchor="start" font-weight="400" dominant-baseline="middle">2 · Cut the release</text>
+<rect x="80" y="354" width="330" height="46" rx="10" fill="#ffd8a8" fill-opacity="1" stroke="#f59e0b" stroke-width="2"/>
+<text x="245.0" y="378.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">sh tools/release.sh</text>
+<line x1="410.0" y1="377.0" x2="442.0" y2="377.0" stroke="#f59e0b" stroke-width="2"/>
+<polygon points="452.0,377.0 442.0,381.5 442.0,372.5" fill="#f59e0b"/>
+<rect x="452" y="354" width="408" height="46" rx="10" fill="#ffd8a8" fill-opacity="1" stroke="#f59e0b" stroke-width="2"/>
+<text x="656.0" y="378.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">reads 0.1.1 → tags v0.1.1 → pushes</text>
+<rect x="80" y="414" width="780" height="32" rx="10" fill="#fff3bf" fill-opacity="0.65" stroke="#f59e0b" stroke-width="1"/>
+<text x="470.0" y="431.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle" font-weight="400" dominant-baseline="middle">refuses a dirty tree · a branch other than main · a tag that exists · failing checks</text>
+<line x1="470.0" y1="470.0" x2="470.0" y2="512.0" stroke="#f59e0b" stroke-width="2"/>
+<polygon points="470.0,522.0 465.5,512.0 474.5,512.0" fill="#f59e0b"/>
+<rect x="318.4" y="486.0" width="303.2" height="20" rx="4" fill="#ffffff"/>
+<text x="470.0" y="496.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#3f3f3f" text-anchor="middle" font-weight="400" dominant-baseline="middle">pushing the tag — the only automatic link</text>
+<text x="68.0" y="557.3" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#b45309" text-anchor="start" font-weight="400" dominant-baseline="middle">AUTOMATIC — from here nothing waits on you</text>
+<rect x="50" y="570" width="840" height="214" rx="12" fill="#ffe8cc" fill-opacity="0.45" stroke="#f59e0b" stroke-width="1"/>
+<text x="68.0" y="587.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#b45309" text-anchor="start" font-weight="400" dominant-baseline="middle">3 · The tag fires CI</text>
+<rect x="80" y="606" width="780" height="46" rx="10" fill="#ffd8a8" fill-opacity="1" stroke="#f59e0b" stroke-width="2"/>
+<text x="470.0" y="630.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">publish.yml · on: push tags v*</text>
+<rect x="80" y="668" width="244" height="42" rx="10" fill="#ffd8a8" fill-opacity="1" stroke="#f59e0b" stroke-width="2"/>
+<text x="202.0" y="690.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">tag == manifest?</text>
+<rect x="348" y="668" width="244" height="42" rx="10" fill="#ffd8a8" fill-opacity="1" stroke="#f59e0b" stroke-width="2"/>
+<text x="470.0" y="690.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">package.sh → zip + index</text>
+<rect x="616" y="668" width="244" height="42" rx="10" fill="#ffd8a8" fill-opacity="1" stroke="#f59e0b" stroke-width="2"/>
+<text x="738.0" y="690.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">sha256 · top level?</text>
+<rect x="80" y="726" width="780" height="32" rx="10" fill="#fff3bf" fill-opacity="0.65" stroke="#f59e0b" stroke-width="1"/>
+<text x="470.0" y="743.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle" font-weight="400" dominant-baseline="middle">any one failing stops it — nothing reaches Pages, and 0.1.0 stays live</text>
+<line x1="470.0" y1="786.0" x2="470.0" y2="812.0" stroke="#8b5cf6" stroke-width="2"/>
+<polygon points="470.0,822.0 465.5,812.0 474.5,812.0" fill="#8b5cf6"/>
+<rect x="386.4" y="794.0" width="167.3" height="20" rx="4" fill="#ffffff"/>
+<text x="470.0" y="804.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#3f3f3f" text-anchor="middle" font-weight="400" dominant-baseline="middle">deploy to GitHub Pages</text>
+<rect x="50" y="824" width="840" height="158" rx="12" fill="#e5dbff" fill-opacity="0.45" stroke="#8b5cf6" stroke-width="1"/>
+<text x="68.0" y="841.9" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#6d28d9" text-anchor="start" font-weight="400" dominant-baseline="middle">4 · Someone else’s Stash offers the update</text>
+<rect x="80" y="860" width="380" height="46" rx="10" fill="#ffd8a8" fill-opacity="1" stroke="#f59e0b" stroke-width="2"/>
+<text x="270.0" y="884.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">published index.yml says 0.1.1</text>
+<rect x="480" y="860" width="380" height="46" rx="10" fill="#d0bfff" fill-opacity="1" stroke="#8b5cf6" stroke-width="2"/>
+<text x="670.0" y="884.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1e1e1e" text-anchor="middle" font-weight="600" dominant-baseline="middle">their installed copy says 0.1.0</text>
+<rect x="80" y="920" width="780" height="46" rx="10" fill="#ffc9c9" fill-opacity="0.65" stroke="#ef4444" stroke-width="1"/>
+<text x="470.0" y="944.0" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#1e1e1e" text-anchor="middle" font-weight="400" dominant-baseline="middle">strings differ → Update appears.  Same string → nothing happens, and nothing says why.</text>
+</svg>

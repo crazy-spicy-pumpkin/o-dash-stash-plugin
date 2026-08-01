@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import random
+import zlib
 from pathlib import Path
 from xml.sax.saxutils import escape
 
@@ -179,6 +180,55 @@ DATA = {
     ],
 }
 
+RELEASE = {
+    "name": "release",
+    "title": "Release — how a change reaches someone else's Stash",
+    "size": (940, 1002),
+    "elements": [
+        ("text", 470, 16, "Release — how a change reaches someone else’s Stash", 24, "#1e1e1e", "center"),
+        ("text", 470, 48, "steps 1 and 2 you do · steps 3 and 4 happen on their own", 16, "#757575", "center"),
+        ("text", 470, 72, "one worked example, carried through: 0.1.0 → 0.1.1", 16, "#757575", "center"),
+
+        ("text", 68, 110, "YOU — nothing is published until you say so", 15, "#b45309", "left"),
+
+        ("zone", 50, 132, 840, 146, "#ffe8cc", "#f59e0b"),
+        ("text", 68, 140, "1 · Bump the manifest", 16, "#b45309", "left"),
+        ("box", 80, 168, 330, 46, "sh tools/bump.sh patch", "#ffd8a8", "#f59e0b"),
+        ("arrow", 410, 191, 452, 191, "", "#f59e0b", False),
+        ("box", 452, 168, 408, 46, "o-dashboard.yml · version: 0.1.0 → 0.1.1", "#ffd8a8", "#f59e0b"),
+        ("note", 80, 228, 780, 32, "check.sh fails if a shipped file changed and the version did not", "#fff3bf", "#f59e0b"),
+
+        ("arrow", 470, 280, 470, 316, "git commit — still private", "#f59e0b", False),
+
+        ("zone", 50, 318, 840, 146, "#ffe8cc", "#f59e0b"),
+        ("text", 68, 326, "2 · Cut the release", 16, "#b45309", "left"),
+        ("box", 80, 354, 330, 46, "sh tools/release.sh", "#ffd8a8", "#f59e0b"),
+        ("arrow", 410, 377, 452, 377, "", "#f59e0b", False),
+        ("box", 452, 354, 408, 46, "reads 0.1.1 → tags v0.1.1 → pushes", "#ffd8a8", "#f59e0b"),
+        ("note", 80, 414, 780, 32, "refuses a dirty tree · a branch other than main · a tag that exists · failing checks", "#fff3bf", "#f59e0b"),
+
+        ("arrow", 470, 470, 470, 522, "pushing the tag — the only automatic link", "#f59e0b", False),
+
+        ("text", 68, 548, "AUTOMATIC — from here nothing waits on you", 15, "#b45309", "left"),
+
+        ("zone", 50, 570, 840, 214, "#ffe8cc", "#f59e0b"),
+        ("text", 68, 578, "3 · The tag fires CI", 16, "#b45309", "left"),
+        ("box", 80, 606, 780, 46, "publish.yml · on: push tags v*", "#ffd8a8", "#f59e0b"),
+        ("box", 80, 668, 244, 42, "tag == manifest?", "#ffd8a8", "#f59e0b"),
+        ("box", 348, 668, 244, 42, "package.sh → zip + index", "#ffd8a8", "#f59e0b"),
+        ("box", 616, 668, 244, 42, "sha256 · top level?", "#ffd8a8", "#f59e0b"),
+        ("note", 80, 726, 780, 32, "any one failing stops it — nothing reaches Pages, and 0.1.0 stays live", "#fff3bf", "#f59e0b"),
+
+        ("arrow", 470, 786, 470, 822, "deploy to GitHub Pages", "#8b5cf6", False),
+
+        ("zone", 50, 824, 840, 158, "#e5dbff", "#8b5cf6"),
+        ("text", 68, 832, "4 · Someone else’s Stash offers the update", 16, "#6d28d9", "left"),
+        ("box", 80, 860, 380, 46, "published index.yml says 0.1.1", "#ffd8a8", "#f59e0b"),
+        ("box", 480, 860, 380, 46, "their installed copy says 0.1.0", "#d0bfff", "#8b5cf6"),
+        ("note", 80, 920, 780, 46, "strings differ → Update appears.  Same string → nothing happens, and nothing says why.", "#ffc9c9", "#ef4444"),
+    ],
+}
+
 # The legend is the same for every diagram, so it is one diagram of its own
 # rather than a footer repeated three times.
 LEGEND = {
@@ -191,7 +241,7 @@ LEGEND = {
     ] + legend(88),
 }
 
-SPECS = [ARCHITECTURE, FLOW, DATA, LEGEND]
+SPECS = [ARCHITECTURE, FLOW, DATA, RELEASE, LEGEND]
 
 
 
@@ -253,7 +303,11 @@ def bound_label(el_id: str, container_id: str, text: str, size: int, container, 
 
 
 def to_excalidraw(spec: dict) -> dict:
-    rng = random.Random(hash(spec["name"]) & 0xFFFF)  # stable output across runs
+    # Excalidraw wants a seed and a nonce per element; their values are
+    # arbitrary, but they must not change between runs or every diagram shows
+    # up modified whenever any one of them is edited. Python's hash() is salted
+    # per process, so it cannot be used here — crc32 is stable by definition.
+    rng = random.Random(zlib.crc32(spec["name"].encode()))
     elements: list[dict] = []
     n = 0
 
