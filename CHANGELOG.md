@@ -5,6 +5,13 @@ version in `o-dashboard.yml` — `tools/release.sh` reads the matching section
 and uses it as the tag annotation and the GitHub Release body, so notes are
 written once rather than retyped into a web form.
 
+## 0.1.1 — 2026-09-18
+
+- The **Average per day** tile is replaced by **Days since last O**: whole
+  calendar days between today and the most recent entry, with that entry's date
+  beneath it. It is measured from today rather than from the period on screen,
+  so it reads the same whichever week, month or year is showing.
+
 ## 0.1.0 — 2026-08-01
 
 First release.

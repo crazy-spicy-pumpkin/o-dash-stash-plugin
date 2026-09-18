@@ -841,7 +841,7 @@ function render() {
   const bestIdx = bucketCounts.indexOf(Math.max(...bucketCounts));
   const activeDays = new Set(inPeriod.map((e) => e.day)).size;
   const totalDays = daysBetween(start, end);
-  const elapsedDays = Math.min(totalDays, Math.max(1, daysBetween(start, new Date()) + 1));
+  const lastEvent = state.events.at(-1);
   const periodViews = viewsBetween(start, end).length;
   const subUnit = gran === 'year' ? 'month' : gran === 'month' ? 'day' : 'day';
 
@@ -861,11 +861,11 @@ function render() {
           })(),
     },
     {
-      label: `Average per ${gran === 'year' ? 'month' : 'day'}`,
-      value: gran === 'year'
-        ? (inPeriod.length / 12).toFixed(1)
-        : (inPeriod.length / Math.max(1, elapsedDays)).toFixed(2),
-      sub: gran === 'year' ? 'across 12 months' : `over ${elapsedDays} day${elapsedDays === 1 ? '' : 's'} elapsed`,
+      // Measured from today, not from the period on screen: it answers "how long
+      // has it been", which does not change as the view moves.
+      label: 'Days since last O',
+      value: lastEvent ? daysBetween(lastEvent.date, new Date()) : '—',
+      sub: lastEvent ? `last on ${fmtDayYear.format(lastEvent.date)}` : 'no entries yet',
     },
     {
       label: 'Scenes watched',
