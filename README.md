@@ -252,6 +252,14 @@ from a Release asset.
   it silently fails to load. Then it deploys to GitHub Pages.
 - Any one of those failing stops the publish, and the previous version stays
   live.
+- **The `github-pages` environment must allow tags.** A run fired by a tag
+  deploys *as the tag*, and GitHub's default rule for that environment admits
+  only the default branch — so the build passes and the deploy is rejected
+  before it starts, with no log, only an annotation: *Tag "v0.1.1" is not
+  allowed to deploy to github-pages due to environment protection rules.* Once,
+  per repo: Settings → Environments → `github-pages` → Deployment branches and
+  tags → add a **tag** rule, `v*`. Then **Re-run failed jobs** on the rejected
+  run; the tag is fine and must not be re-made.
 
 **4 · Stash offers the update** — *automatic*
 
@@ -267,7 +275,8 @@ rebuilding *identical* sources still produces a different sha256. Publishing on
 every commit would change what people install every time the README was edited.
 
 To publish your own fork, enable Pages (Settings → Pages → Source: **GitHub
-Actions**) and push a tag. Or serve `dist/` from any static host; only the URL
+Actions**), allow `v*` tags on the `github-pages` environment (step 3 above),
+and push a tag. Or serve `dist/` from any static host; only the URL
 changes.
 
 Two things worth knowing:
