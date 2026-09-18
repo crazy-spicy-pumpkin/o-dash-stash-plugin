@@ -347,6 +347,13 @@ Other commands:
     sh tools/notes.sh 0.1.0            # print that version's CHANGELOG section
     sh tools/release.sh                # tag the current version and publish it
     python3 docs/diagrams.py           # regenerate the diagrams from their spec
+    sh tools/themes.sh                 # rebuild docs/themes.gif from demo mode
+
+**Rebuild the GIF whenever a change alters what the page looks like**, and
+commit it with that change. Nothing fails when it goes stale — it is a picture,
+and no check can tell that a picture is out of date — so this is a habit rather
+than a guard. It renders demo mode only, five palettes with the theme menu
+open, and needs Chrome and ImageMagick.
 
 ## Checks
 

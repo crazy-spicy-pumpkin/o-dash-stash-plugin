@@ -4,7 +4,13 @@
 <meta charset="utf-8">
 <title>capture</title>
 <link rel="stylesheet" href="/src/styles.css">
-<style>html, body { margin: 0; padding: 0; }</style>
+<style>
+html, body { margin: 0; padding: 0; }
+/* The frame is a fixed window and the page is usually shorter than it. Only the
+   root carries the palette, so whatever it does not cover comes out as the
+   browser's white — a bright band under every dark frame. */
+#mount { min-height: 100vh; box-sizing: border-box; }
+</style>
 </head>
 <body>
 <!--
